@@ -1,20 +1,10 @@
 #!/usr/bin/python3
 
-'''
-given a vcf-file that has bases in last columns instead of genotype,
-convert bases to fake genotype, modify ALT if needed, 
-including adding a third state
-also add header header names of base-individuals from sys.argv[1] (all in one string, ws-separated)
-
-(use case: Kay's script was used to add ape-bases to vcf)
-# CAUTION: this also removes extra char that is added to header by Kays script (visible with 'less file')
-
-'''
-
+import sys
 
 ### helper
 def check_alts(alt, base):
-	''' check if (potentially multiple) ALT match '''
+	''' check if one of the ALT alleles matches base '''
 	alt_alls = alt.split(",")
 	for i, b in enumerate(alt_alls):
 		if b == base: 
@@ -65,7 +55,7 @@ def convert_bases(ref, alt, bases):
 	''' convert list of bases to list of GT and update ALT for every base '''
 	gts = []
 	for base in bases:
-		alt, gt = convert_base(ref, alt, base) # check if this updates alt
+		alt, gt = convert_base(ref, alt, base)
 		gts.append(gt)
 	return alt, gts
 
@@ -81,41 +71,44 @@ convert_bases("A", "C,G", ["T","C",".","A","T"]) == ('C,G,T', ['3/3', '1/1', './
 ###########################################################
 
 
-## TODO: use this if __name__ == __main__ construct
+def main(instream, new_names):
+	'''
+	given a vcf-file from stdin that has bases in last columns instead of genotype,
+	convert bases to fake genotype, modify ALT if needed,
+	also add header names of base-individuals from sys.argv[1] (all in one string, ws-separated)
 
-import sys
+	(use case: Kay's BamSNPAddMaf was used to add ape-bases to vcf)
+	CAUTION: this also removes extra char that is added to header by Kays script (visible with 'less file')
+	'''
 
-# variable input
-infile = sys.stdin	 		# input vcf from stream
-new_names = sys.argv[1]		# string with all the names from base individuals	
+	# how many columns with bases? convert new names to tab-separated string
+	new_names = new_names.split()
+	n = len(new_names)
+	new_names = "\t".join(new_names)
 
+	# header
+	vcf = instream.readline()
+	while vcf[:6] != "#CHROM":
+		sys.stdout.write(vcf[:(-2)*n]+"\n") # remove strange last character that addMAf adds to header
+		vcf = instream.readline()
+	last_header = vcf[:(-2)*n] + new_names + "\n"
+	sys.stdout.write(last_header)
 
-# how many columns with bases? convert new names to tab-separated string
-new_names = new_names.split()
-n = len(new_names)
-new_names = "\t".join(new_names)
-
-# header
-vcf = infile.readline()
-while vcf[:6] != "#CHROM":  
-	sys.stdout.write(vcf[:(-2)*n]+"\n") # remove strange last character that addMAf adds to header
-	vcf = infile.readline()
-last_header = vcf[:(-2)*n] + new_names + "\n"
-sys.stdout.write(last_header)
-
-# body
-for line in infile:
-	line = line.strip().split()
-	bases = line[-n:]
-	ref = line[3]
-	alt = line[4]
-	# go through new bases, adjust ALT and convert to genotype
-	new_alt, new_gts = convert_bases(ref, alt, bases)
-	out = line[:4] + [new_alt] + line[5:-n] + new_gts
-	sys.stdout.write("\t".join(out) + "\n")
-	#sys.stdout.write("\t".join(line) + "\n")
+	# body
+	for line in instream:
+		line = line.strip().split()
+		bases = line[-n:]
+		ref = line[3]
+		alt = line[4]
+		# go through new bases, adjust ALT and convert to genotype
+		new_alt, new_gts = convert_bases(ref, alt, bases)
+		out = line[:4] + [new_alt] + line[5:-n] + new_gts
+		sys.stdout.write("\t".join(out) + "\n")
+		#sys.stdout.write("\t".join(line) + "\n")
 
 
+if __name__ == "__main__":
+    main(sys.stdin, sys.argv[1])
 
 	
 
