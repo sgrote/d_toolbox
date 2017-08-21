@@ -1,7 +1,7 @@
 
 '''
 filter_line:
-take a vcf-line and a ONE string with a filter expression per line
+take a vcf-line and ONE string with a filter expression per line
 e.g. "(QUAL > 0 or FILTER != 'LowQual') and AC > 20"
 may contain keywords QUAL, FILTER and all keywords from info (to allow any combination of and/or)
 return True/False
@@ -219,5 +219,26 @@ filter_genotypes("GF > 2 or GT == './0'", vcf_line2) == ['21', '148', '.', 'C', 
 '''
 
 
+# replace a vcf-line with genotypes only (without filtering)
+def genotypes_only(vcf_line):
+	'''
+	in: vcf_line as list of strings
+	out: vcf_line with genotypes only
+	'''
+	out_line = vcf_line[:]
+	key_pos = out_line[8].split(":")
+	gt_pos = key_pos.index("GT")
+	out_line[8] = "GT"
+	for i in range(9, len(out_line)):
+		gt_parts = out_line[i].split(":")
+		out_line[i] = gt_parts[gt_pos]
+	return out_line
 
-
+''' test
+vcf_line = ['21','148','.','C','T','0','.','.','GT:GF','0/1:-1','0/1:3','./0:-1']
+genotypes_only(vcf_line) == ['21', '148', '.', 'C', 'T', '0', '.', '.', 'GT', '0/1', '0/1', './0']
+vcf_line2 = ['21','148','.','C','T','0','.','.','XX:GT:GF','x:0/1:-1','2/2:0/1:3']
+genotypes_only(vcf_line2) == ['21', '148', '.', 'C', 'T', '0', '.', '.', 'GT', '0/1', '0/1']
+vcf_line3 = ['21','148','.','C','T','0','.','.','GT','0/1','1|1']
+genotypes_only(vcf_line3) == ['21', '148', '.', 'C', 'T', '0', '.', '.', 'GT', '0/1', '1|1']
+'''
