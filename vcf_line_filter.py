@@ -242,3 +242,27 @@ genotypes_only(vcf_line2) == ['21', '148', '.', 'C', 'T', '0', '.', '.', 'GT', '
 vcf_line3 = ['21','148','.','C','T','0','.','.','GT','0/1','1|1']
 genotypes_only(vcf_line3) == ['21', '148', '.', 'C', 'T', '0', '.', '.', 'GT', '0/1', '1|1']
 '''
+
+
+def check_filter(vcf_line, filter_string=None):
+	''' True if line passes filter or no filter specified '''
+	if filter_string and not filter_line(filter_string, vcf_line):
+		return False
+	else:
+		return True
+
+
+def filter_gt(vcf_line, filter_ind=None, gt_only=False):
+	''' filter individual genotypes if specified, else return the input '''
+	if filter_ind:
+		vcf_line = filter_genotypes(filter_ind, vcf_line, gt_only) # this does gt_only on the fly
+	elif gt_only:
+		vcf_line = genotypes_only(vcf_line)
+	return vcf_line[:]
+
+''' test
+vcf_line = ['21','148','.','C','T','0','.','.','GT:GF','0/1:-1','0/1:3','./0:-1']
+filter_gt(vcf_line) == vcf_line
+filter_gt(vcf_line, gt_only=True) == vcf_line[:8] + ['GT','0/1','0/1','./0']
+filter_gt(vcf_line, filter_ind="GF >= 0", gt_only=True) == vcf_line[:8] + ['GT','./.','0/1','./.']
+'''
