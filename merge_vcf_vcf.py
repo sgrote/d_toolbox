@@ -7,7 +7,6 @@ QUAL, FILTER, INFO fields are not merged/updated but replaced by "."
 optional filtering on quality (for an already merged file it's harder to filter on file-specific criteria)
 '''
 
-# TODO: add options --require1, --require2: --> skip if pos is in file2 but missing in file1
 # TODO: accurate merging of FORMAT, "1/1:.:." for missing (but mostly --gt_only --> not needed)
 # maybe TODO: merge headers
 # maybe TODO: modify merge_alt_alleles to take position of genotype as input (now for "1/1:other:info the genotype is assumed to be the first entry")
@@ -118,6 +117,8 @@ def main():
 	parser.add_argument("--gt_only", action="store_true", help="Restrict to genotypes in sample columns")
 	parser.add_argument("--fill1", action="store_true", help="Fill vcf1 with REF 0/0 for missing positions, else ./.")
 	parser.add_argument("--fill2", action="store_true", help="Like --fill1 for vcf2")
+	parser.add_argument("--require1", action="store_true", help="Restrict to positions present in vcf1")
+	parser.add_argument("--require2", action="store_true", help="Restrict to positions present in vcf2")
 	parser.add_argument("--keep_miss", action="store_true", help="Keep lines that were filtered out as missing data ./.")
 	parser.add_argument("--filter1", help="Expression to filter vcf1, e.g. 'QUAL > 0 and AC > 10'. Acts on QUAL, FILTER and INFO fields. CAUTION: needs whitespaces around keywords.")
 	parser.add_argument("--filter2", help="Like --filter1 for vcf2")
@@ -163,17 +164,19 @@ def main():
 			try:
 				out = None
 				# pos not in v2, including the case that v2 file has reached end
-				# -> if v1 passes filter add v2 0/0 or ./. GTs to v1 and read next v1 line
+				# -> if v2 not required and v1 passes filter: add v2 0/0 or ./. GTs and read next v1 line
 				if (len(v2) == 0) or (len(v1) != 0 and int(v1[1]) < int(v2[1])):
-					v1, gt2 = filter_and_fill(v1, n_v2, args.filter1, args.filter_ind1, args.gt_only, args.fill2, args.var, args.keep_miss)
-					if v1:
-						out = v1 + gt2
+					if not args.require2:
+						v1, gt2 = filter_and_fill(v1, n_v2, args.filter1, args.filter_ind1, args.gt_only, args.fill2, args.var, args.keep_miss)
+						if v1:
+							out = v1 + gt2
 					v1 = vcf_1.readline().split()
 				## pos not v1
 				elif (len(v1) == 0) or (len(v2) != 0 and int(v2[1]) < int(v1[1])):
-					v2, gt1 = filter_and_fill(v2, n_v1, args.filter2, args.filter_ind2, args.gt_only, args.fill1, args.var, args.keep_miss)
-					if v2:
-						out = v2[:9] + gt1 + v2[9:]
+					if not args.require1:
+						v2, gt1 = filter_and_fill(v2, n_v1, args.filter2, args.filter_ind2, args.gt_only, args.fill1, args.var, args.keep_miss)
+						if v2:
+							out = v2[:9] + gt1 + v2[9:]
 					v2 = vcf_2.readline().split()
 				## positions are present in both vcfs	
 				elif v1[1] == v2[1]:
@@ -222,8 +225,14 @@ zcat $VCF1 | $MERGE $VCF2 --fill2 --filter1 "QUAL > 70" --gt_only | less -S
 zcat $VCF1 | $MERGE $VCF2 --fill2 --filter2 "QUAL > 0" --gt_only --var | less -S
 zcat $VCF1 | $MERGE $VCF2 --filter_ind1 "GT == '1/1'" --filter2 "QUAL > 0" | less -S
 zcat $VCF1 | $MERGE $VCF2 --fill2 --filter2 "QUAL > 0" --filter_ind2 "GF >= 1" --gt_only --var | less -S
+zcat $VCF1 | $MERGE $VCF2 --gt_only --var --require1 | less -S
+zcat $VCF1 | $MERGE $VCF2 --gt_only --var --require2 | less -S
+zcat $VCF1 | $MERGE $VCF2 --gt_only --var --require1 --require2 | less -S
 
-
+# require archaics to be present (since they are already filtered and needed in all following D-stats)
+echo `date`
+zcat $VCF1 | $MERGE $VCF2 --fill2 --filter2 "QUAL > 0" --filter_ind2 "GF >= 1" --gt_only --var --require1 > test_merge4.vcf
+echo `date`
 
 '''
 
