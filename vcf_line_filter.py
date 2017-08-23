@@ -266,3 +266,36 @@ filter_gt(vcf_line) == vcf_line
 filter_gt(vcf_line, gt_only=True) == vcf_line[:8] + ['GT','0/1','0/1','./0']
 filter_gt(vcf_line, filter_ind="GF >= 0", gt_only=True) == vcf_line[:8] + ['GT','./.','0/1','./.']
 '''
+
+
+def check_gt(vcf_line, var=False):
+	''' True if genotypes are present in vcf_line, False if only missing data
+	(or REF if var=True). Useful after filtering of individual genotypes '''
+	key_pos = vcf_line[8].split(":")
+	gt_pos = key_pos.index("GT")
+	gts = [vcf_line[i].split(":")[gt_pos] for i in range(9, len(vcf_line))]
+	if var:
+		failset = {"0",".","/","|"}
+	else:
+		failset = {".","/","|"}
+	for gt in gts:
+		if any([x not in failset for x in gt]):
+			return True
+	return False
+
+''' test
+check_gt(['21','148','.','C','T','0','.','.','GT:GF','0/1:-1','0/1:3','./0:-1']) == True
+check_gt(['21','148','.','C','T','0','.','.','AB:GT:GF','./.:0/1:-1','./.:0/1:3','./.:./0:-1']) == True
+check_gt(['21','148','.','C','T','0','.','.','GT:GF:AB','./.:0/1:-1','./.:0/1:3','./.:./0:-1']) == False
+check_gt(['21','148','.','C','T','0','.','.','GT:GF','0/.:-1','0|.:3','./0:-1']) == True
+check_gt(['21','148','.','C','T','0','.','.','GT:GF','0/.:-1','0|.:3','./0:-1'], var=True) == False
+check_gt(['21','148','.','C','T','0','.','.','GT','0/.','0|.','./1'], var=True) == True
+check_gt(['21','148','.','C','T,A,G','0','.','.','GT','./.','.|.','./3'], var=True) == True
+'''
+
+
+
+
+
+
+
