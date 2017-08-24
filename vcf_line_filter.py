@@ -294,8 +294,46 @@ check_gt(['21','148','.','C','T,A,G','0','.','.','GT','./.','.|.','./3'], var=Tr
 '''
 
 
+# If only one line is present or passes line-filter
+def combi_filter(line1, filter1=None, filter_ind1=None, gt_only=False, var=False, keep_miss=False):
+	'''
+	Combine filter_line and filter_genotypes, also check for var, optionally reduce sample-info to genotypes
+	Out: filtered_line1; if filters not passed: None or missing-data; if not var: None
+	'''
+	# skip invariable sites even when keep_miss
+	if var and line1[4] == ".":
+		return None
+	# filter line1
+	if filter1 and not filter_line(filter1, line1):
+		if keep_miss:
+			out_line = line1[:5] + [".",".",".","GT"] + ["./."] * (len(line1)-9)
+			return out_line
+		else:
+			return None
+	# filter line1 genotypes
+	out_line = filter_gt(line1, filter_ind1, gt_only)
+	# check if any of the (ALT)-alleles is left after gt-filterig
+	if not keep_miss and not check_gt(out_line, var):
+		return None
+	# full line with modified genotypes
+	return out_line
 
+''' test
+line1 = ['21','148','.','C','T','10','LowQual', 'AC=27;AN=558;AF=a_string','GT:GF','0/1:-1','0/0:3','./0:-1']
+combi_filter(line1,"QUAL > 9") == line1
+combi_filter(line1,"QUAL > 10") == None
+combi_filter(line1,"QUAL > 9 and FILTER == 'LowQual'") == line1
+combi_filter(line1,"QUAL > 9 and FILTER != 'LowQual'") == None
+combi_filter(line1,"AN > 500 or AC > 30") == line1
+combi_filter(line1,"AN > 500 and AC > 30") == None
+combi_filter(line1,"AN > 500", gt_only=True) == line1[:8]+['GT','0/1','0/0','./0']
+combi_filter(line1,"QUAL > 0", "GF >= 0") == line1[:9]+['./.:-1','0/0:3','./.:-1']
+combi_filter(line1,"QUAL > 0", "GF >= 0", var=True) == None
+combi_filter(line1,"QUAL > 0", "GF >= 0", var=True, keep_miss=True) == line1[:9]+['./.:-1','0/0:3','./.:-1']
+combi_filter(line1,filter_ind1="GF > 3", gt_only=True) == None
+combi_filter(line1,filter_ind1="GF > 3", gt_only=True, keep_miss=True) == (line1[:8]+['GT','./.','./.','./.'])
+combi_filter(['21','148','.','C','.','10','.', '.','GT:GF','0/0:-1'],var=True) == None
+combi_filter(['21','148','.','C','.','10','.', '.','GT:GF','0/0:-1'],var=True, keep_miss=True) == None
 
-
-
+'''
 
