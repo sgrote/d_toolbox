@@ -13,7 +13,6 @@ optional filtering on quality (for an already merged file it's harder to filter 
 
 
 import sys
-import imp
 import argparse
 import gzip
 
@@ -128,7 +127,7 @@ def main():
 	args = parser.parse_args()
 
 	if sys.stdin.isatty():
-		print("Needs vcf1 from stdin, e.g. 'zcat file1.vcf.gz | merge_vcf_vcf.py file2.vcf'")
+		sys.exit("Error: Needs vcf1 from stdin, e.g. 'zcat file1.vcf.gz | merge_vcf_vcf.py file2.vcf'")
 	vcf_1 = sys.stdin
 
 	if args.vcf_2_file.endswith('.gz'):
@@ -155,6 +154,8 @@ def main():
 			
 		v1 = vcf_1.readline().split()
 		v2 = vcf_2.readline().split()
+		if v1[0] != v2[0]:
+			sys.exit("Error: Chromosomes do not match: vcf_1-chrom={}, vcf_2-chrom={}.".format(v1[0], v2[0]))
 		## number of donors
 		n_v1 = len(v1)-9
 		n_v2 = len(v2)-9
