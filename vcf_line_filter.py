@@ -306,7 +306,7 @@ def combi_filter(line1, filter1=None, filter_ind1=None, gt_only=False, var=False
 	# filter line1
 	if filter1 and not filter_line(filter1, line1):
 		if keep_miss:
-			out_line = line1[:5] + [".",".",".","GT"] + ["./."] * (len(line1)-9)
+			out_line = line1[:8] + ["GT"] + ["./."] * (len(line1)-9)
 			return out_line
 		else:
 			return None
@@ -324,6 +324,7 @@ combi_filter(line1,"QUAL > 9") == line1
 combi_filter(line1,"QUAL > 10") == None
 combi_filter(line1,"QUAL > 9 and FILTER == 'LowQual'") == line1
 combi_filter(line1,"QUAL > 9 and FILTER != 'LowQual'") == None
+combi_filter(line1,"QUAL > 9 and FILTER != 'LowQual'", keep_miss=True) == line1[:8]+['GT','./.','./.','./.']
 combi_filter(line1,"AN > 500 or AC > 30") == line1
 combi_filter(line1,"AN > 500 and AC > 30") == None
 combi_filter(line1,"AN > 500", gt_only=True) == line1[:8]+['GT','0/1','0/0','./0']
@@ -331,7 +332,7 @@ combi_filter(line1,"QUAL > 0", "GF >= 0") == line1[:9]+['./.:-1','0/0:3','./.:-1
 combi_filter(line1,"QUAL > 0", "GF >= 0", var=True) == None
 combi_filter(line1,"QUAL > 0", "GF >= 0", var=True, keep_miss=True) == line1[:9]+['./.:-1','0/0:3','./.:-1']
 combi_filter(line1,filter_ind1="GF > 3", gt_only=True) == None
-combi_filter(line1,filter_ind1="GF > 3", gt_only=True, keep_miss=True) == (line1[:8]+['GT','./.','./.','./.'])
+combi_filter(line1,filter_ind1="GF > 3", gt_only=True, keep_miss=True) == line1[:8]+['GT','./.','./.','./.']
 combi_filter(['21','148','.','C','.','10','.', '.','GT:GF','0/0:-1'],var=True) == None
 combi_filter(['21','148','.','C','.','10','.', '.','GT:GF','0/0:-1'],var=True, keep_miss=True) == None
 
