@@ -4,7 +4,7 @@
 Take a vcf-file from stdin that has bases in LAST columns instead of genotype, convert bases to fake genotype, modify ALT if needed. Write to stdout.
 (use case: Kays BamSNPAddMaf was used to add ape-bases to vcf).
 CAUTION: Base-columns are assumed to have no sample-name in header. It also removes extra char that is added to header by Kays script (visible with less-command).
-Usage: zcat vcf_with_bases.vcf.gz | base_to_gt.py | "sampleA sampleB"
+Usage: zcat vcf_with_bases.vcf.gz | base_to_gt.py "sampleA sampleB"
 '''
 
 import sys
@@ -83,7 +83,7 @@ convert_bases("A", "C,G", ["T","C",".","A","T"]) == ('C,G,T', ['3/3', '1/1', './
 
 
 def main():
-	parser = argparse.ArgumentParser(description='Take a vcf-file from stdin that has bases in LAST columns instead of genotype, convert bases to fake genotype, modify ALT if needed. Write to stdout. CAUTION:  use case: Kays BamSNPAddMaf was used to add ape-bases to vcf, so base-columns are assumed to have no sample-name in header. It also deletes last 2 chars in header lines to remove strange sign that is added by Kays script (visible with less-command).', usage='zcat vcf_with_bases.vcf.gz | base_to_gt.py | "sampleA sampleB"')
+	parser = argparse.ArgumentParser(description='Take a vcf-file from stdin that has bases in LAST columns instead of genotype, convert bases to fake genotype, modify ALT if needed. Write to stdout. CAUTION:  use case: Kays BamSNPAddMaf was used to add ape-bases to vcf, so base-columns are assumed to have no sample-name in header. It also deletes last 2 chars in header lines to remove strange sign that is added by Kays script (visible with less-command).', usage='zcat vcf_with_bases.vcf.gz | base_to_gt.py "sampleA sampleB"')
 	parser.add_argument("new_names", help="names of samples with bases instead of genotypes, all in one string, ws-separated")
 
 	args = parser.parse_args()
