@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 '''
 Use Info table to get population for each individual
@@ -9,7 +9,7 @@ Use this info to calculate d-statistics on headerless paste of Nean-Denis-Chimp-
 ouput: [[pop1][pop2][abba_nean][baba_nean][abba_denis][baba_denis][#vindija_sites][#altai_sites]
 '''
 
-import StringIO
+#import StringIO
 import csv
 
 # extract genotype
@@ -64,7 +64,7 @@ def get_block_borders(chrom_start, chrom_end, centro_start, centro_end, n_blocks
 	elif chrom_start > centro_start and chrom_start < centro_end:
 		eff_chromsize = chromsize - (centro_end - chrom_start) 
 		chrom_start += centro_end - chrom_start
-		print "overlap at beginning, new chromsize=", eff_chromsize, chrom_start, chrom_end
+		print("overlap at beginning, new chromsize=", eff_chromsize, chrom_start, chrom_end)
 		skipped = True	
 	# centromer overlaps at end
 	elif chrom_end > centro_start and chrom_end < centro_end:
@@ -86,7 +86,7 @@ def get_block_borders(chrom_start, chrom_end, centro_start, centro_end, n_blocks
 		# skip centromere (add centromere-size to block, centro positions are skipped in d_block_sums())
 		# also ensure that start of informative positions lies before end of centromere
 		if skipped==False and borders[0] <= centro_end and next_border >= centro_start:
-			print "landed in centromere", next_border
+			print("landed in centromere", next_border)
 			next_border += centrosize
 			skipped = True
 		borders.append(next_border)
@@ -145,11 +145,11 @@ def get_pops_from_files(pop1, pop2, pop3, pop4):
 		with open(pop_files[i], "r") as p:
 			for pop in p:
 				pops[i].append(pop.rstrip()) 
-	print pops
+	print(pops)
 	# generate all possible combinations (That's ugly!)
 	for i in range(len(pops[0])):
 		for j in range(len(pops[1])):
-		 	for k in range(len(pops[2])):
+			for k in range(len(pops[2])):
 				for l in range(len(pops[3])):
 					pw_pops[0].append(pops[0][i])
 					pw_pops[1].append(pops[1][j])
@@ -203,7 +203,7 @@ def get_p(vcf, pop, col_gender, X):
 			elif vcf[indi] != ".|.": sum_alleles += 1
 	# compute frequency 
 	if sum_alleles == 0:
-		#print "This Pop has no genotypes:", pop
+		#print("This Pop has no genotypes:", pop)
 		return(None)   # unknown sites may be fully genotyped invariable sites, here there is simply no GT 
 	else: daf = ac*1.0 / sum_alleles		
 
@@ -214,7 +214,7 @@ def get_p(vcf, pop, col_gender, X):
 # one list for containig block-abba-baba-sums for altai and vindija together in one list
 # 0. blocks, 1. abba, baba, 2. pw_pops  [ [[abba][baba]] [[abba][baba]] ...]
 def abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, block_borders, centro_range, private="false", transver="false", affixed="false"):
-	print "affixed:", affixed
+	print("affixed:", affixed)
 	pops = set(pw_pops[0]+pw_pops[1]+pw_pops[2]+pw_pops[3]+["Africa2"])
 	sites_file = open("sites","w")
 	sites_file.write('\t'.join(["block","pos","ref","alt"] + list(pops)) + "\n")		
@@ -231,7 +231,7 @@ def abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, block_borders, centro
 	affixed_county = 0			
 	for line in vcf:
 		line = line.rstrip().split()
-		#print line
+		#print(line)
 		## bases/genotypes
 		ref = line[3]
 		alt = line[4]		
@@ -243,16 +243,16 @@ def abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, block_borders, centro
 				continue
 		## exclude centromere, NEW: not needed because of manifesto and everything
 		#if int(line[1]) > centro_range[0] and int(line[1]) < centro_range[1]:
-			#print "Skipping centromere position", int(line[1]), centro_range
+			#print("Skipping centromere position", int(line[1]), centro_range)
 			#continue
 		## next block?
 		while int(line[1]) > block_borders[block_count+1]: 
 			# add current block and initialize again
 			blocks.append(block_sum)
 			block_sum = [[0]*n_comp, [0]*n_comp]			
-			print sites[block_count]
+			print(sites[block_count])
 			block_count += 1
-			print "".join(map(str,["starting block ", block_count+1]))
+			print("".join(map(str,["starting block ", block_count+1])))
 		## is it X-chrom?
 		if line[0]=="X": X = True
 		else: X = False	
@@ -260,11 +260,11 @@ def abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, block_borders, centro
 		p = {}
 		for pop in pops:	
 			p[pop] = get_p(line, pop_colnums[pop], col_gender, X)	
-		#print p
+		#print(p)
 		
 		## NEW: reduce to almost fixed in Africa2 (0.02 threshold = 1 allele in 37 Africa2-indis)
 		if affixed == "true" and not (p["Africa2"]<0.02 or p["Africa2"]>0.98):
-			#print p["Africa2"]
+			#print(p["Africa2"])
 			affixed_county += 1
 			continue
 		## TODO: apply this somehow to new 'derived' situation?
@@ -295,12 +295,12 @@ def abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, block_borders, centro
 				baba.append(p_baba)
 				# NEW add to sites-count-per pw_pop if informative
 				if p_abba > 0 or p_baba > 0:
-					#print i
-					#print sites_comp				
+					#print(i)
+					#print(sites_comp)
 					sites_comp[i] += 1
 		# check that not all is 0
 		if sum(abba)==0 and sum(baba)==0:
-			#print "uninformative site", line
+			#print("uninformative site", line)
 			continue 
 		# add abba and baba to block_sum
 		for i in range(n_comp):
@@ -311,12 +311,12 @@ def abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, block_borders, centro
 		sites_file.write("\t".join([str(block_count+1)] + [line[1]] + line[3:5] + map(str,ps)) + "\n")
 		sites[block_count] += 1
 		if (sum(sites) % 200 == 0):
-			print sum(sites)			
+			print(sum(sites))
 	# save last block	
 	blocks.append(block_sum)
 	sites_file.close()
-	print "Number of skipped transitions: %d" % trans_county							
-	print "Number of skipped sites too variable in Africans: %d" % affixed_county						
+	print("Number of skipped transitions: %d" % trans_county)
+	print("Number of skipped sites too variable in Africans: %d" % affixed_county)
 	return(blocks, sites_comp)
 	
 
