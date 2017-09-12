@@ -1,16 +1,90 @@
 #!/usr/bin/python3
 
 '''
-Use Info table to get population for each individual
-Go through vcf-header and collect all column-numbers that belong to distinct populations
 Create all pairwise population matches
-Use this info to calculate d-statistics on headerless paste of Nean-Denis-Chimp-Pongo-bases and human-vcf-file
+Use Info table to get population and sex for each individual
+Go through vcf-header and collect all column-numbers that belong to distinct populations
+Use this info to calculate abba, baba counts per block and population match
 
-ouput: [[pop1][pop2][abba_nean][baba_nean][abba_denis][baba_denis][#vindija_sites][#altai_sites]
 '''
 
 #import StringIO
 import csv
+
+
+
+def get_pops_from_files(pop1, pop2, pop3, pop4):
+	'''
+	in: files with one column containing population names
+	out: list [[pop1][pop2][pop3][pop4]] for all matches,
+	avoiding self-matches and duplicates (including D(w,x,y,z), D(x,w,y,z))
+	'''
+	# TODO: maybe use a pandas df here?
+	pop_files = [pop1, pop2, pop3, pop4]
+	pops = [[] for k in range(4)]
+	pw_pops = [[] for k in range(4)]
+	# read populations
+	for i in range(4):
+		with open(pop_files[i], "r") as p:
+			for pop in p:
+				pops[i].append(pop.rstrip())
+	print(pops)
+	# generate all possible combinations (That's ugly!)
+	for i in range(len(pops[0])):
+		for j in range(len(pops[1])):
+			for k in range(len(pops[2])):
+				for l in range(len(pops[3])):
+					pw_pops[0].append(pops[0][i])
+					pw_pops[1].append(pops[1][j])
+					pw_pops[2].append(pops[2][k])
+					pw_pops[3].append(pops[3][l])
+	# remove unnecessary matches
+	#remove = [i for i in range(len(pw_pops[0])) if len(set([pw_pops[0][i],pw_pops[1][i],pw_pops[2][i]])) < 3]
+	# find indices to remove
+	remove = []
+	pairs = []
+	for i in range(len(pw_pops[0])):
+		# avoid e.g. (Vidija, Vindija, Eskimo, Mbuti)
+		if len(set([pw_pops[0][i],pw_pops[1][i],pw_pops[2][i]])) < 3:
+			remove.append(i)
+		# avoid e.g. (Altai, Vindija, ...) and (Vindija, Altai, ...)
+		else:
+			comb1 = pw_pops[0][i] + pw_pops[1][i] + pw_pops[2][i]+ pw_pops[3][i]
+			comb2 = pw_pops[1][i] + pw_pops[0][i] + pw_pops[2][i]+ pw_pops[3][i]
+			if comb1 in pairs or comb2 in pairs:
+				remove.append(i)
+			else:
+				pairs.append(comb1)
+	# remove
+	for i in range(len(pw_pops)):
+		for j in sorted(remove, reverse=True):
+			del pw_pops[i][j]
+	return(pw_pops)
+
+
+
+def get_range(chrom ,ranges_file):
+	'''
+	in: chrom (e.g. 21 or chr21),
+	bed-file (chr, start, end) also 21 or chr21 (centromeres or dimensions)
+	out: [start, end] of entry for chromosome
+	'''
+	# check for chr-prefix
+	chrom = str(chrom)
+	if not chrom.startswith("chr"):
+		chrom = "chr" + chrom
+	with open(ranges_file,"r") as ranges:
+		for line in ranges:
+			line = line.rstrip().split()
+			line_chr = line[0]
+			if not line_chr.startswith("chr"):
+				line_chr = "chr" + line_chr
+			if line_chr == chrom:
+				return([int(line[1]), int(line[2])])
+	print("Error, Chromosome range not found")
+
+
+
 
 # extract genotype
 # (e.g. ["0/1:50", "0/0:10"] -> ["0|1","0|0"])
@@ -34,16 +108,6 @@ def extract_c_gt(c_gts):
 			gt_line.append(".|.")
 	return(gt_line)
 
-# [start, end] of centromere or chromosome
-# input: chrom, start, end
-def get_range(chrom ,ranges_file):
-	with open(ranges_file,"r") as ranges:
-		for line in ranges:
-			line = line.rstrip()
-			line = line.split()
-			if line[0] == chrom:
-				return([int(line[1]), int(line[2])]) 
-	print("Error, Chromosome range not found")
 
 # [borders] for chromosome blocks
 # input-chrom_start, chrom_end (range of potentially informative sites from nean_denis_derived)
@@ -133,50 +197,6 @@ def get_pop_colnumbers(pop_dict, vcf_header):
 				else:
 					pop_colnums["Africa2"].append(i)
 	return(pop_colnums, col_gender)
-
-
-# population-matches [[pop1][pop2][pop3]] pop1=all,including archs; pop2=mbuti,bantu,esan; 3=altai,vindija 
-def get_pops_from_files(pop1, pop2, pop3, pop4):
-	pop_files = [pop1, pop2, pop3, pop4]
-	pops = [[] for k in range(4)]
-	pw_pops = [[] for k in range(4)]
-	# read populations
-	for i in range(4):
-		with open(pop_files[i], "r") as p:
-			for pop in p:
-				pops[i].append(pop.rstrip()) 
-	print(pops)
-	# generate all possible combinations (That's ugly!)
-	for i in range(len(pops[0])):
-		for j in range(len(pops[1])):
-			for k in range(len(pops[2])):
-				for l in range(len(pops[3])):
-					pw_pops[0].append(pops[0][i])
-					pw_pops[1].append(pops[1][j])
-					pw_pops[2].append(pops[2][k])
-					pw_pops[3].append(pops[3][l])
-	# remove unnecessary matches
-	#remove = [i for i in range(len(pw_pops[0])) if len(set([pw_pops[0][i],pw_pops[1][i],pw_pops[2][i]])) < 3]
-	# find indices to remove
-	remove = []
-	pairs = []
-	for i in range(len(pw_pops[0])):
-		# avoid e.g. (Vidija, Vindija, Eskimo, Mbuti)
-		if len(set([pw_pops[0][i],pw_pops[1][i],pw_pops[2][i]])) < 3:
-			remove.append(i)
-		# avoid e.g. (Altai, Vindija, ...) and (Vindija, Altai, ...)
-		else:
-			comb1 = pw_pops[0][i] + pw_pops[1][i] + pw_pops[2][i]+ pw_pops[3][i]
-			comb2 = pw_pops[1][i] + pw_pops[0][i] + pw_pops[2][i]+ pw_pops[3][i]
-			if comb1 in pairs or comb2 in pairs:
-				remove.append(i)
-			else:
-				pairs.append(comb1)
-	# remove
-	for i in range(len(pw_pops)):
-		for j in sorted(remove, reverse=True):
-			del pw_pops[i][j]
-	return(pw_pops)
 
 
 # get p (derived allele frequency) for a population given vcf and col_nums and derived-GT
