@@ -22,14 +22,12 @@ def main():
 	parser.add_argument("pop3", help="Like pop1 for position three of D-stats.")
 	parser.add_argument("pop4", help="Like pop1 for position four of D-stats.")
 	parser.add_argument("-i", "--info", required=True, help="mandatory: csv-file with population metadata for pop1-pop4 (might contain more pops). Needs columns [sample; population; sex]; with sample being identical to the name in the vcf.")
-	# nr-of-blocks or blocksize
-	blocks = parser.add_mutually_exclusive_group(required=True)
-	blocks.add_argument("-n", "--nblocks", type=int, help="Nr. of blocks. This or -b/--blocksize/-b needs to be set.")
-	blocks.add_argument("-k", "--blocksize", type=int, help="Size of blocks in kb. This or -n/--nblocks needs to be set.")
+	# blocksize
+	parser.add_argument("-k", "--blocksize", type=int, default=200, help="Size of blocks in kb.")
 
 	# optional
 	parser.add_argument("-t", "--transver", action="store_true", help="Transversions only.")
-	parser.add_argument("--startstop", default="/mnt/expressions/steffi/chromSizes/hg19_chrall_ranges.txt", help="optional: bed-file containing chr,start,stop for the boundaries of the chromosome to take into account (ugly but required for calculation of block borders...might change). Defaults to chrom-sizes for hg19 from UCSC. Only used when -n defined.")
+	#parser.add_argument("--startstop", default="/mnt/expressions/steffi/chromSizes/hg19_chrall_ranges.txt", help="optional: bed-file containing chr,start,stop for the boundaries of the chromosome to take into account (ugly but required for calculation of block borders...might change). Defaults to chrom-sizes for hg19 from UCSC.") #TODO: maybe use VinDenAlt manifesto here; later:
 	parser.add_argument("--centro", help="optional: bed-file containing chr,start,stop for the centromere of the chromosome. If defined the centromere will be excluded.")
 
 	args = parser.parse_args()
@@ -46,31 +44,26 @@ def main():
 	#D.print_table(pw_pops)
 	#D.print_table_to_file(pw_pops, "pw_pops") # TODO: is that needed? was active in original d_stats.py
 
-
 	## TODO: may get centro range and chrom range when first line is parsed (chrom-arg not needed anymore)
-
 	## get centromere range
 	if args.centro:
 		centro_range = D.get_range(args.chrom ,args.centro)
 	else:
 	    centro_range = [0,0]
-
-	## get chrom range for blocking if nr of blocks is defined, and not blocksize
-	if args.nblocks:
-		chrom_range = D.get_range(args.chrom ,args.startstop)
-		print(chrom_range)
-
 	print(centro_range)
 
+	## NEW: avoid chrom-ranges and block borders - only take x-kb steps when going through vcf
+	### get chrom range for blocking if nr of blocks is defined, and not blocksize
+	#chrom_range = D.get_range(args.chrom ,args.startstop)
+	#print(chrom_range)
+	## get borders for chromosome-blocking
+	#block_borders = D.get_block_borders(chrom_start, chrom_end, centro_range[0], centro_range[1], n_blocks, kb)
+	#with open("block_borders","w") as blockout:
+		#blockout.write("\n".join(map(str,block_borders)))
 
 
 
 
-
-## get borders for chromosome-blocking
-#block_borders = F.get_block_borders(chrom_start, chrom_end, centro_range[0], centro_range[1], n_blocks, kb)
-#with open("block_borders","w") as blockout:
-	#blockout.write("\n".join(map(str,block_borders)))
 ## get population and sex for every vcf-individual
 #pop_dict = F.get_pop_dict(sample_info)
 

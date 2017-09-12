@@ -109,56 +109,56 @@ def extract_c_gt(c_gts):
 	return(gt_line)
 
 
-# [borders] for chromosome blocks
-# input-chrom_start, chrom_end (range of potentially informative sites from nean_denis_derived)
-# input-centro_range: chrom, start, end (from UCSC cyto bands)
-# if kb=True n_blocks defines the size of blocks instead of the number of blocks
-def get_block_borders(chrom_start, chrom_end, centro_start, centro_end, n_blocks, kb="false"):	
-	skipped = False
-	n_blocks = int(n_blocks)
-	chrom_start = int(chrom_start)
-	chrom_end = int(chrom_end)
-	chromsize = chrom_end - chrom_start + 1
-	centrosize = centro_end - centro_start + 1
-	## get effective chrom size (interesting part) without centromer
-	# centromer lies completely in region
-	if chrom_start <= centro_start and chrom_end >= centro_end:
-		eff_chromsize = chromsize - centrosize
-	# centromer overlaps at beginning	
-	elif chrom_start > centro_start and chrom_start < centro_end:
-		eff_chromsize = chromsize - (centro_end - chrom_start) 
-		chrom_start += centro_end - chrom_start
-		print("overlap at beginning, new chromsize=", eff_chromsize, chrom_start, chrom_end)
-		skipped = True	
-	# centromer overlaps at end
-	elif chrom_end > centro_start and chrom_end < centro_end:
-		eff_chromsize = chromsize - (chrom_end - centro_start) 	
-		skipped = True
-	# centromer lies outside
-	elif chrom_start > centro_end or chrom_end < centro_start:
-		eff_chromsize = chromsize
-		skipped = True
-	if kb == "true": 	
-		blocksize = n_blocks * 1000
-		n_blocks =  eff_chromsize / blocksize
-	else: 
-		blocksize = eff_chromsize / n_blocks		
-	# initialize with start of chromosome
-	borders = [chrom_start - 1]
-	for i in range(n_blocks):
-		next_border = borders[-1] + blocksize
-		# skip centromere (add centromere-size to block, centro positions are skipped in d_block_sums())
-		# also ensure that start of informative positions lies before end of centromere
-		if skipped==False and borders[0] <= centro_end and next_border >= centro_start:
-			print("landed in centromere", next_border)
-			next_border += centrosize
-			skipped = True
-		borders.append(next_border)
-	# for kb-windows: append window rather then extending the last one	
-	if kb == "true": borders.append(borders[-1] + blocksize)
-	# last block might be longer, but less than n_blocks (int division) for 
-	else: borders[-1] = borders[-1] + n_blocks	
-	return(borders)	
+## [borders] for chromosome blocks
+## input-chrom_start, chrom_end (range of potentially informative sites from nean_denis_derived)
+## input-centro_range: chrom, start, end (from UCSC cyto bands)
+## if kb=True n_blocks defines the size of blocks instead of the number of blocks
+#def get_block_borders(chrom_start, chrom_end, centro_start, centro_end, n_blocks, kb="false"):	
+	#skipped = False
+	#n_blocks = int(n_blocks)
+	#chrom_start = int(chrom_start)
+	#chrom_end = int(chrom_end)
+	#chromsize = chrom_end - chrom_start + 1
+	#centrosize = centro_end - centro_start + 1
+	### get effective chrom size (interesting part) without centromer
+	## centromer lies completely in region
+	#if chrom_start <= centro_start and chrom_end >= centro_end:
+		#eff_chromsize = chromsize - centrosize
+	## centromer overlaps at beginning	
+	#elif chrom_start > centro_start and chrom_start < centro_end:
+		#eff_chromsize = chromsize - (centro_end - chrom_start) 
+		#chrom_start += centro_end - chrom_start
+		#print("overlap at beginning, new chromsize=", eff_chromsize, chrom_start, chrom_end)
+		#skipped = True	
+	## centromer overlaps at end
+	#elif chrom_end > centro_start and chrom_end < centro_end:
+		#eff_chromsize = chromsize - (chrom_end - centro_start) 	
+		#skipped = True
+	## centromer lies outside
+	#elif chrom_start > centro_end or chrom_end < centro_start:
+		#eff_chromsize = chromsize
+		#skipped = True
+	#if kb == "true": 	
+		#blocksize = n_blocks * 1000
+		#n_blocks =  eff_chromsize / blocksize
+	#else: 
+		#blocksize = eff_chromsize / n_blocks		
+	## initialize with start of chromosome
+	#borders = [chrom_start - 1]
+	#for i in range(n_blocks):
+		#next_border = borders[-1] + blocksize
+		## skip centromere (add centromere-size to block, centro positions are skipped in d_block_sums())
+		## also ensure that start of informative positions lies before end of centromere
+		#if skipped==False and borders[0] <= centro_end and next_border >= centro_start:
+			#print("landed in centromere", next_border)
+			#next_border += centrosize
+			#skipped = True
+		#borders.append(next_border)
+	## for kb-windows: append window rather then extending the last one	
+	#if kb == "true": borders.append(borders[-1] + blocksize)
+	## last block might be longer, but less than n_blocks (int division) for 
+	#else: borders[-1] = borders[-1] + n_blocks	
+	#return(borders)	
 
 
 # dictionary {individual:[superpop, population, sex]}
