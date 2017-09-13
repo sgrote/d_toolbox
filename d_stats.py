@@ -28,14 +28,17 @@ def main():
 	# optional
 	parser.add_argument("-t", "--transver", action="store_true", help="Transversions only.")
 	#parser.add_argument("--startstop", default="/mnt/expressions/steffi/chromSizes/hg19_chrall_ranges.txt", help="optional: bed-file containing chr,start,stop for the boundaries of the chromosome to take into account (ugly but required for calculation of block borders...might change). Defaults to chrom-sizes for hg19 from UCSC.") #TODO: maybe use VinDenAlt manifesto here; later:
-	parser.add_argument("--centro", help="optional: bed-file containing chr,start,stop for the centromere of the chromosome. If defined the centromere will be excluded.")
+	parser.add_argument("-c" ,"--centro", help="optional: bed-file containing chr,start,stop for the centromere of the chromosome. If defined the centromere will be excluded.")
+	parser.add_argument("-s", "--sitesfile", choices=["sites", "full"], help="optional: if 'sites' write a 'sites'-file with [block, pos] for every informative position. If 'full' the 'sites'-file also contains all derived allele freqs at informative positions for the populations provided.")
 
 	args = parser.parse_args()
 
-	## vcf from stdin
-	#if sys.stdin.isatty():
-		#sys.exit("Error: Needs vcf from stdin, usage: 'zcat file.vcf.gz | d_stats.py pop1 pop2 pop3 pop4 -i pop-info -n 20 -t'")
-	#vcf = sys.stdin
+	print(args.sitesfile)
+
+	# vcf from stdin
+	if sys.stdin.isatty():
+		sys.exit("Error: Needs vcf from stdin, usage: 'zcat file.vcf.gz | d_stats.py pop1 pop2 pop3 pop4 -i pop-info -n 20 -t'")
+	vcf = sys.stdin
 
 	########
 
@@ -44,53 +47,38 @@ def main():
 	#D.print_table(pw_pops)
 	#D.print_table_to_file(pw_pops, "pw_pops") # TODO: is that needed? was active in original d_stats.py
 
-	## TODO: may get centro range and chrom range when first line is parsed (chrom-arg not needed anymore)
+	## TODO: may get centro range when first line is parsed (chrom-arg not needed anymore)
 	## get centromere range
-	if args.centro:
-		centro_range = D.get_range(args.chrom ,args.centro)
-	else:
-	    centro_range = [0,0]
+	centro_range = D.get_range(args.chrom ,args.centro) if args.centro else None
 	print(centro_range)
 
-	## NEW: avoid chrom-ranges and block borders - only take x-kb steps when going through vcf
-	### get chrom range for blocking if nr of blocks is defined, and not blocksize
-	#chrom_range = D.get_range(args.chrom ,args.startstop)
-	#print(chrom_range)
-	## get borders for chromosome-blocking
-	#block_borders = D.get_block_borders(chrom_start, chrom_end, centro_range[0], centro_range[1], n_blocks, kb)
-	#with open("block_borders","w") as blockout:
-		#blockout.write("\n".join(map(str,block_borders)))
+	# skip header until sample line
+	vcf_header = D.get_sample_header(vcf)
+	#print(vcf_header)
 
+	# from info-file: get population and sex for every vcf-individual
+	pop_dict = D.get_pop_dict(args.info)
+	#print(pop_dict)
 
+	# from vcf-header: get col-numbers for every pop and sex for every col
+	pop_colnums, col_gender = D.get_pop_colnumbers(pop_dict, vcf_header)
+	print(pop_colnums)
+	#print(col_gender)
 
+	# compute blockwise ABBA  [ [[abba][baba]] [[abba][baba]] ...] (NEW param-Afr fixed)
+	blocks, sites_comp = D.abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, args.blocksize, centro_range, args.transver, args.sitesfile)
 
-## get population and sex for every vcf-individual
-#pop_dict = F.get_pop_dict(sample_info)
+	# rearrange output and print to file [[pop1][pop2][pop3][block][abba][baba]]
+	blocks_out = D.rearrange_blocks(pw_pops, blocks)
+	with open("out_blocks","w") as out:
+		out.write('\t'.join(["pop1","pop2","pop3","pop4","block","abba","baba"])+"\n")
+	D.print_table_to_file(blocks_out, "out_blocks", mode="a")
 
-
-## get vcf-columns for every population (NEW: and for African2)
-#vcf_header = vcf_input.readline().rstrip().split()
-##print vcf_header
-#pop_colnums, col_gender = F.get_pop_colnumbers(pop_dict, vcf_header)
-##print pop_colnums
-#print "Number of individuals in Africa2: ", len(pop_colnums["Africa2"])
-
-
-
-## compute blockwise ABBA  [ [[abba][baba]] [[abba][baba]] ...] (NEW param-Afr fixed)
-#blocks, sites_comp = F.abba_block_sums(vcf_input, pop_colnums, pw_pops, col_gender, block_borders, centro_range, private, transver, affixed)
-
-### rearrange output and print to file [[pop1][pop2][pop3][block][abba][baba]]
-#blocks_out = F.rearrange_blocks(pw_pops, blocks)
-#with open("out_blocks","w") as out:
-	#out.write('\t'.join(["pop1","pop2","pop3","pop4","block","abba","baba"])+"\n")
-#F.print_table_to_file(blocks_out, "out_blocks", mode="a")
-
-### NEW print sites per comparison to file [[pop1][pop2][pop3][sites]]
-#pw_pops.append(sites_comp)
-#with open("sites_comp","w") as out:
-	#out.write('\t'.join(["pop1","pop2","pop3","pop4","n_sites"])+"\n")
-#F.print_table_to_file(pw_pops, "sites_comp", mode="a")
+	# print sites per comparison to file
+	pw_pops.append(sites_comp)
+	with open("sites_comp","w") as out:
+		out.write('\t'.join(["pop1","pop2","pop3","pop4","n_sites"])+"\n")
+	D.print_table_to_file(pw_pops, "sites_comp", mode="a")
 
 
 
