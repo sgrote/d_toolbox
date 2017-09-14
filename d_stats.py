@@ -33,8 +33,6 @@ def main():
 
 	args = parser.parse_args()
 
-	print(args.sitesfile)
-
 	# vcf from stdin
 	if sys.stdin.isatty():
 		sys.exit("Error: Needs vcf from stdin, usage: 'zcat file.vcf.gz | d_stats.py pop1 pop2 pop3 pop4 -i pop-info -n 20 -t'")
@@ -50,7 +48,7 @@ def main():
 	## TODO: may get centro range when first line is parsed (chrom-arg not needed anymore)
 	## get centromere range
 	centro_range = D.get_range(args.chrom ,args.centro) if args.centro else None
-	print(centro_range)
+	#print(centro_range)
 
 	# skip header until sample line
 	vcf_header = D.get_sample_header(vcf)
@@ -62,7 +60,7 @@ def main():
 
 	# from vcf-header: get col-numbers for every pop and sex for every col
 	pop_colnums, col_gender = D.get_pop_colnumbers(pop_dict, vcf_header)
-	print(pop_colnums)
+	#print(pop_colnums)
 	#print(col_gender)
 
 	# compute blockwise ABBA  [ [[abba][baba]] [[abba][baba]] ...] (NEW param-Afr fixed)
