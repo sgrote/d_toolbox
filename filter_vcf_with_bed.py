@@ -6,11 +6,10 @@ output to stdout
 input stream: (#header), columns: chr, pos, ... (1-based)
 input bed-file (compressed or uncompressed): chr, pos, end (0-based, exclusive)
 
-assumes bed and vcf are only one chrom 
+assumes vcf is only one chrom 
 
 '''
 
-# TODO: allow multiple chroms in one bed-file
 
 import sys
 import argparse
@@ -42,14 +41,13 @@ def main():
 
 		bed = bed_f.readline().split()
 
-		## check that chrom matches
-		if vcf[0] != bed[0]:
-			sys.exit("Error: Chromosomes do not match: vcf-chrom={}, bed-chrom={}.".format(vcf[0], bed[0]))
-
 		## check if vcf position is in bed (bed 1-3 = vcf 2-3)
 		while not (len(vcf)==0 or len(bed)==0):
+			# check that chrom matches:
+			if vcf[0] != bed[0]:
+				bed = bed_f.readline().split()
 			# A) vcf in bed
-			if ((int(vcf[1]) > int(bed[1])) and (int(vcf[1]) <= int(bed[2]))):
+			elif ((int(vcf[1]) > int(bed[1])) and (int(vcf[1]) <= int(bed[2]))):
 				sys.stdout.write("\t".join(vcf) + "\n")
 				vcf = vcf_file.readline().split()
 			# B) vcf smaller than bed
