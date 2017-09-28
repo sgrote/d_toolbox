@@ -17,13 +17,13 @@ import gzip
 
 
 def main():
-	parser = argparse.ArgumentParser(description="filter streamed in vcf-like file with bed-file. Write to stdout. input stream: (#header), columns: chr, pos, ... (1-based). Assumes bed and vcf are only one chrom.", usage="zcat file.vcf | filter_vcf_with_bed.py filter.bed")
+	parser = argparse.ArgumentParser(description="filter streamed in vcf-like file with bed-file. Write to stdout. input stream: (#header), columns: chr, pos, ... (1-based). Assumes bed and vcf are only one chrom.", usage="zcat file.vcf.gz | filter_vcf_with_bed.py filter.bed")
 	parser.add_argument("bed_file", help="chr, pos, end (0-based, exclusive). Positions to be kept in vcf. filter.bed or filter.bed.gz")
 
 	args = parser.parse_args()
 	
 	if sys.stdin.isatty():
-		sys.exit("Error: Needs vcf1 from stdin, e.g. 'zcat file1.vcf.gz | merge_vcf_vcf.py file2.vcf'")
+		sys.exit("Error: Needs vcf from stdin, e.g. 'zcat file.vcf.gz | filter_vcf_with_bed.py filter.bed'")
 	vcf_file = sys.stdin
 
 	## print header
