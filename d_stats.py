@@ -10,7 +10,7 @@ get pop1-pop4 from file, vcf from stdin
 import sys
 import argparse
 
-import d_functions as D
+import d_functions_new as D
 
 
 def main():
@@ -40,12 +40,6 @@ def main():
 
 	########
 
-	## get population matches pop1, pop2, pop3, pop4
-	pw_pops = D.get_pops_from_files(args.pop1, args.pop2, args.pop3, args.pop4)
-	#D.print_table(pw_pops)
-	#D.print_table_to_file(pw_pops, "pw_pops") # TODO: is that needed? was active in original d_stats.py
-
-	## TODO: may get centro range when first line is parsed (chrom-arg not needed anymore)
 	## get centromere range
 	centro_range = D.get_range(args.chrom ,args.centro) if args.centro else None
 	#print(centro_range)
@@ -54,12 +48,16 @@ def main():
 	vcf_header = D.get_sample_header(vcf)
 	#print(vcf_header)
 
-	# from info-file: get population and sex for every vcf-individual
-	pop_dict = D.get_pop_dict(args.info)
-	#print(pop_dict)
+	## get population matches pop1, pop2, pop3, pop4
+	pw_pops = D.get_pops_from_files(args.pop1, args.pop2, args.pop3, args.pop4)
+	#D.print_table(pw_pops)
+	#D.print_table_to_file(pw_pops, "pw_pops") # TODO: is that needed? was active in original d_stats.py
+	
+	## get unique pops
+	pops = D.get_unique_pops(pw_pops)
 
-	# from vcf-header: get col-numbers for every pop and sex for every col
-	pop_colnums, col_gender = D.get_pop_colnumbers(pop_dict, vcf_header)
+	# from info-file and vcf-header: get col-numbers for every relevant pop and sex for every col
+	pop_colnums, col_gender = D.get_pop_colnumbers(args.info, vcf_header, pops)
 	#print(pop_colnums)
 	#print(col_gender)
 

@@ -9,8 +9,29 @@ Use this info to calculate abba, baba counts per block and population match
 '''
 
 #import StringIO
-import csv
+#import csv
+import pandas as pd
 
+
+def get_range(chrom ,ranges_file):
+	'''
+	in: chrom (e.g. 21 or chr21),
+	    bed-file (chr, start, end) also 21 or chr21 (centromeres or dimensions)
+	out: [start, end] of entry for chromosome
+	'''
+	# check for chr-prefix
+	chrom = str(chrom)
+	if not chrom.startswith("chr"):
+		chrom = "chr" + chrom
+	with open(ranges_file,"r") as ranges:
+		for line in ranges:
+			line = line.rstrip().split()
+			line_chr = line[0]
+			if not line_chr.startswith("chr"):
+				line_chr = "chr" + line_chr
+			if line_chr == chrom:
+				return [int(line[1]), int(line[2])]
+	print("Error, Chromosome range not found")
 
 
 def get_pops_from_files(pop1, pop2, pop3, pop4):
@@ -62,68 +83,61 @@ def get_pops_from_files(pop1, pop2, pop3, pop4):
 	return pw_pops
 
 
-
-def get_range(chrom ,ranges_file):
+def get_unique_pops(pw_pops):
 	'''
-	in: chrom (e.g. 21 or chr21),
-	    bed-file (chr, start, end) also 21 or chr21 (centromeres or dimensions)
-	out: [start, end] of entry for chromosome
+	in: list of lists for pairwise population matches
+	out: list of unique population names
 	'''
-	# check for chr-prefix
-	chrom = str(chrom)
-	if not chrom.startswith("chr"):
-		chrom = "chr" + chrom
-	with open(ranges_file,"r") as ranges:
-		for line in ranges:
-			line = line.rstrip().split()
-			line_chr = line[0]
-			if not line_chr.startswith("chr"):
-				line_chr = "chr" + line_chr
-			if line_chr == chrom:
-				return [int(line[1]), int(line[2])]
-	print("Error, Chromosome range not found")
+	unique_pops = set()
+	for d_position in pw_pops:
+		for pop in d_position:
+			unique_pops.add(pop)
+	return unique_pops
 
+''' test
+pw_pops = [['popA', 'popB'], ['popC', 'popA'], ['popC', 'popD'], ['chimp', 'chimp']]
+get_unique_pops(pw_pops)
+'''
+	
 
-# TODO: maybe use pandas here
-def get_pop_dict(info_file):
+# NEW use pandas here instead of get_pop_dict(), allow multiple pops per sample
+def get_pop_colnumbers(info_file, vcf_header, pops):
 	'''
-	in: csv-file with columns [sample, pop, sex]
-	out: dictionary {individual:[population, sex]}
-	'''
-	with open(info_file, 'r') as f:
-		reader = csv.reader(f)
-		next(reader)
-		pop_dict={}
-		# get superpop, population and gender for every individual
-		for line in reader:
-			pop_dict[line[0]] = [line[1], line[2]]
-	return pop_dict
-
-
-def get_pop_colnumbers(pop_dict, vcf_header):
-	'''
-	in: pop_dict {individual:[population, sex]}
+	in: info_file csv-file with columns [sample, pop, sex]
 	    vcf_header as list
+	    pops as set of pops needed for D-stats
 	out: dictionary {population:[colnumbers]}
 	     dictionary {colnumber:sex}
 	'''
-	pop_colnums={}
-	col_gender={}			
-	# for each donor-id from vcf-header, get population
+	pop_colnums = {}
+	col_gender = {}
+	info = pd.read_csv(info_file)
+	# for each donor-id from vcf-header, get population and sex if present in info-file
 	for i in range(len(vcf_header)):
-		if vcf_header[i] in pop_dict:
+		if info['sample'].str.contains(vcf_header[i]).any():
+			sample_info = info[info['sample'] == vcf_header[i]]
 			# add col-number to population
-			pop = pop_dict[vcf_header[i]][0]
-			if pop not in pop_colnums:
-				pop_colnums[pop] = [i]
-			else:
-				pop_colnums[pop].append(i)
+			for pop in sample_info['pop']:
+				# NEW: add only pops that are needed for D-stats
+				if pop in pops:
+					if pop not in pop_colnums:
+						pop_colnums[pop] = [i]
+					else:
+						pop_colnums[pop].append(i)
 			# add sex to col-number 
-			# TODO this could be a list instead of a dictionary, when used add offset=9 to make index=col
+			# (first entry of sample_info['sex'], since this column is all the same for one sample)
 			# TODO maybe code gender as 0/1, m/f
-			gender = pop_dict[vcf_header[i]][1]
-			col_gender[i] = gender 	
+			col_gender[i] = sample_info['sex'].iloc[0] 	
 	return pop_colnums, col_gender
+
+''' test
+vcf_header = ['#CHROM','POS','ID','REF','ALT','QUAL','FILTER','INFO','FORMAT','AltaiNeandertal','Vindija33.19','Denisova']
+info_file = '/mnt/expressions/steffi/D/infofiles/example.csv'
+pops = {'Vindija33.19','Denisova','Neandertal'} 	# no Altai
+popcol, colsex = get_pop_colnumbers(info_file, vcf_header, pops)
+popcol == {'Neandertal': [9, 10], 'Denisova': [11], 'Vindija33.19': [10]}
+colsex == {9: 'female', 10: 'female', 11: 'female'}
+'''
 
 
 def get_sample_header(vcf):
