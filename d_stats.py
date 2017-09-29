@@ -10,7 +10,7 @@ get pop1-pop4 from file, vcf from stdin
 import sys
 import argparse
 
-import d_functions_new as D
+import d_functions as D
 
 
 def main():
