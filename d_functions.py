@@ -114,7 +114,7 @@ def get_pop_colnumbers(info_file, vcf_header, pops):
 	info = pd.read_csv(info_file)
 	# for each donor-id from vcf-header, get population and sex if present in info-file
 	for i in range(len(vcf_header)):
-		if info['sample'].str.contains(vcf_header[i]).any():
+		if any(info['sample'] == vcf_header[i]):
 			sample_info = info[info['sample'] == vcf_header[i]]
 			# add col-number to population
 			for pop in sample_info['pop']:
@@ -127,7 +127,7 @@ def get_pop_colnumbers(info_file, vcf_header, pops):
 			# add sex to col-number 
 			# (first entry of sample_info['sex'], since this column is all the same for one sample)
 			# TODO maybe code gender as 0/1, m/f
-			col_gender[i] = sample_info['sex'].iloc[0] 	
+			col_gender[i] = sample_info['sex'].iloc[0]
 	return pop_colnums, col_gender
 
 ''' test
@@ -279,6 +279,7 @@ def abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, block_size, centro_ra
 			block_count += 1
 			print("starting block ", block_count+1, "until position", block_end)
 
+		## TODO: maybe before computing p(ALT), check that not all pop3 and pop4 genotypes are the same
 		## get alternative allele freqs for input populations
 		# TODO: this must be faster
 		p = {}
