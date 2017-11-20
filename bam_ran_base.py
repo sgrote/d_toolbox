@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 '''
 take a samtools mpileup *.bam output from stdin
@@ -30,43 +30,43 @@ import argparse
 
 # one position
 def sample_base(pos, min_reads, min_qual):
-	## remove 0-read-coverage and Indels (not a full line)
-	if int(pos[3]) < min_reads or "+" in pos[4] or "-" in pos[4]:
-		#print "aussortiert"
-		#print pos
-		return(None)
-	bases = list(pos[4].upper())
-	quals = list(pos[5])
+    ## remove 0-read-coverage and Indels (not a full line)
+    if int(pos[3]) < min_reads or "+" in pos[4] or "-" in pos[4]:
+        #print("aussortiert")
+        #print(pos)
+        return(None)
+    bases = list(pos[4].upper())
+    quals = list(pos[5])
 
-	# remove read-start/end encodings
-	if "^" in bases or "$" in bases:
-		bases = [bases[i] for i in range(len(bases)) if not (bases[i] in "$^" or bases[i-1]=="^")]
-		#print "clean bases"
-		#print bases
-			
-	# filter for quality, also remove "*" which has qual associated and therefor cannot be removed before
-	q = [ord(qual)-33 for qual in quals]
-	if any([qu < min_qual for qu in q]) or any([base == "*" for base in bases]):
-		#print "filtere!"
-		#print pos
-		#print q
-		bases = [bases[i] for i in range(len(bases)) if q[i] >= min_qual and bases[i]!="*"]
-		#print bases
-		if len(bases) == 0:
-			return(None)
-		
-	if any([base not in "ACTG" for base in bases]):
-		print "unclean!"
-		print pos
-		print bases
-	
-	# select a random base
- 	ran_base = random.choice(bases)
- 	#if len(set(bases)) > 1: 
-		#print pos
-		#print ran_base
-	out = pos[:2] + [ran_base]
-	return(out)
+    # remove read-start/end encodings
+    if "^" in bases or "$" in bases:
+        bases = [bases[i] for i in range(len(bases)) if not (bases[i] in "$^" or bases[i-1]=="^")]
+        #print("clean bases")
+        #print(bases)
+            
+    # filter for quality, also remove "*" which has qual associated and therefor cannot be removed before
+    q = [ord(qual)-33 for qual in quals]
+    if any([qu < min_qual for qu in q]) or any([base == "*" for base in bases]):
+        #print("filtere!")
+        #print(pos)
+        #print(q)
+        #print([qu < min_qual for qu in q])
+        bases = [bases[i] for i in range(len(bases)) if q[i] >= min_qual and bases[i]!="*"]
+        if len(bases) == 0:
+            return(None)
+        
+    if any([base not in "ACTG" for base in bases]):
+        print("unclean!")
+        print(pos)
+        print(bases)
+    
+    # select a random base
+    ran_base = random.choice(bases)
+    #if len(set(bases)) > 1: 
+        #print(pos)
+        #print(ran_base)
+    out = pos[:2] + [ran_base]
+    return(out)
 
 
 
@@ -91,13 +91,13 @@ def main():
     i = 1
     while True:
         chrom = pos[0]
-        print "next chrom!"
+        print("next chrom!")
         #if chrom=="3": break
         outfile = args.outfile_trunk + "_chr" + chrom + ".tab.gz"
-        print pos
-        with gzip.open(outfile, "wb") as out:
+        print(pos)
+        with gzip.open(outfile, "wt") as out:
             outline = sample_base(pos, args.min_reads, args.min_qual)
-            print outline
+            print(outline)
             if outline:
                 outline = "\t".join(outline)+"\n"
                 out.write(outline)
@@ -105,23 +105,23 @@ def main():
                 pos = pos.split()
                 ## next chrom?
                 if pos[0] != chrom:
-                    print "Next chrom!"
+                    print("Next chrom!")
                     break
                 outline = sample_base(pos, args.min_reads, args.min_qual)
-                #print outline
+                #print(outline)
                 if outline:
                     outline = "\t".join(outline)+"\n"
                     out.write(outline)
                     i += 1
                     if i % 100000 == 0: 
-                        print pos
-                        print outline.rstrip()
+                        print(pos)
+                        print(outline.rstrip())
             else:
                 break
 
 
 if __name__ == "__main__":
-	main()
+    main()
 
 
 
