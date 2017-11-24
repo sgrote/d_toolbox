@@ -11,6 +11,7 @@ Use this info to calculate abba, baba counts per block and population match
 #import StringIO
 #import csv
 import pandas as pd
+import sys
 
 
 def get_range(chrom ,ranges_file):
@@ -80,6 +81,8 @@ def get_pops_from_files(pop1, pop2, pop3, pop4):
     for i in range(len(pw_pops)):
         for j in sorted(remove, reverse=True):
             del pw_pops[i][j]
+    if len(pw_pops[1]) == 0:
+        sys.exit("\nError: could not create pairwise population matches - check the pop input files.")
     return pw_pops
 
 
