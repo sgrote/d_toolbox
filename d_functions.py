@@ -65,18 +65,21 @@ def get_pops_from_files(pop1, pop2, pop3, pop4):
     # find indices to remove
     remove = []
     pairs = []
+    combs = [""]*4
     for i in range(len(pw_pops[0])):
         # avoid e.g. (Vidija, Vindija, Eskimo, Mbuti)
-        if len(set([pw_pops[0][i],pw_pops[1][i],pw_pops[2][i]])) < 3:
+        if len(set([pw_pops[0][i],pw_pops[1][i],pw_pops[2][i],pw_pops[3][i]])) < 4:
             remove.append(i)
-        # avoid e.g. (Altai, Vindija, ...) and (Vindija, Altai, ...)
+        # avoid e.g. (Altai,Vindija,...) and (Vindija,Altai,...), (...,chimp,orang) and (...,orang,chimp)
         else:
-            comb1 = pw_pops[0][i] + pw_pops[1][i] + pw_pops[2][i]+ pw_pops[3][i]
-            comb2 = pw_pops[1][i] + pw_pops[0][i] + pw_pops[2][i]+ pw_pops[3][i]
-            if comb1 in pairs or comb2 in pairs:
+            combs[0] = pw_pops[0][i] + pw_pops[1][i] + pw_pops[2][i]+ pw_pops[3][i]
+            combs[1] = pw_pops[1][i] + pw_pops[0][i] + pw_pops[2][i]+ pw_pops[3][i]
+            combs[2] = pw_pops[0][i] + pw_pops[1][i] + pw_pops[3][i]+ pw_pops[2][i]
+            combs[3] = pw_pops[1][i] + pw_pops[0][i] + pw_pops[3][i]+ pw_pops[2][i]
+            if any([comb in pairs for comb in combs]):
                 remove.append(i)
             else:
-                pairs.append(comb1)
+                pairs.append(combs[0])
     # remove
     for i in range(len(pw_pops)):
         for j in sorted(remove, reverse=True):
