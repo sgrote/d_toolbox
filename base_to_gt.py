@@ -100,7 +100,7 @@ def main():
 	# header
 	vcf = instream.readline()
 	while vcf[:6] != "#CHROM":
-		sys.stdout.write(vcf[:(-2)*n]+"\n") # remove strange last character that addMAf adds to header
+		sys.stdout.write(vcf[:(-3)*n]+"\n") # remove strange last character that addMAf adds to header
 		vcf = instream.readline()
 	last_header = vcf[:(-2)*n] + args.new_names + "\n"
 	sys.stdout.write(last_header)

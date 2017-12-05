@@ -2,13 +2,13 @@
 
 '''
 write to STDOUT for multiple merging steps
-header is not merged but only last line with sample names is kept
+take header from one of the files or add a minimal standard header (default)
 QUAL, FILTER, INFO fields are not merged/updated but replaced by "."
+FORMAT is taken from one of the files, or if gt_only replaced by "GT"
 optional filtering on quality (for an already merged file it's harder to filter on file-specific criteria)
 '''
 
-# TODO: accurate merging of FORMAT, "1/1:.:." for missing (but mostly --gt_only --> not needed)
-# maybe TODO: merge headers
+# maybe TODO: accurate merging of FORMAT, "1/1:.:." for missing (but mostly --gt_only --> not needed)
 # maybe TODO: modify merge_alt_alleles to take position of genotype as input (now for "1/1:other:info the genotype is assumed to be the first entry")
 
 
@@ -110,7 +110,7 @@ merge_and_filter(line1, line3, filter_ind1="GF > 3", var=True, keep_miss=True, g
 '''
 
 def main():
-	parser = argparse.ArgumentParser(description='Merge two vcf files, one from STDIN the other as first command-line argument (.vcf or .vcf.gz). Specify whether missing positions in one file should be converted to "./." or "0/0" with fill_ref1, fill_ref2 flags. Optional filtering for lines and individual genotypes with condition-string. Header is reduced to sample names. Writes to STDOUT.', usage='zcat file1.vcf.gz | merge_vcf_vcf.py file2.vcf.gz --fill1 --filter2 "QUAL > 3 and AC >= 10"')
+	parser = argparse.ArgumentParser(description='Merge two vcf files, one from STDIN the other as first command-line argument (.vcf or .vcf.gz). Specify whether missing positions in one file should be converted to "./." or "0/0" with fill_ref1, fill_ref2 flags. Optional filtering for lines and individual genotypes with condition-string. Header is either a minimal default header or taken from one of the files. QUAL, FILTER, INFO are replaced by ".", FORMAT is taken from one of the files or "GT" if gt_only. Writes to STDOUT.', usage='zcat file1.vcf.gz | merge_vcf_vcf.py file2.vcf.gz --fill1 --filter2 "QUAL > 3 and AC >= 10"')
 	parser.add_argument("vcf_2_file", help="Second vcf file to merge (.vcf or .vcf.gz)")
 	parser.add_argument("--var", action="store_true", help="Restrict to variable sites")
 	parser.add_argument("--gt_only", action="store_true", help="Restrict to genotypes in sample columns")
@@ -123,6 +123,7 @@ def main():
 	parser.add_argument("--filter2", help="Like --filter1 for vcf2")
 	parser.add_argument("--filter_ind1", help="Expression to filter individual genotypes of vcf1, e.g. 'GF >= 0 or GT == 1/1'. Acts on keywords in FORMAT. Not passing genotypes will be replaced by './.' . CAUTION: needs whitespaces around keywords.")
 	parser.add_argument("--filter_ind2", help="Like --filter_ind1 for vcf2")
+	parser.add_argument("--header", choices=["vcf1", "vcf2"], help="optional: take the header from vcf1 or vcf2. If not specified a minimal standard header is added.")
 	
 	args = parser.parse_args()
 
@@ -131,25 +132,36 @@ def main():
 	vcf_1 = sys.stdin
 
 	if args.vcf_2_file.endswith('.gz'):
-	    opener = gzip.open
+		opener = gzip.open
 	else:
-	    opener = open
+		opener = open
 	with opener(args.vcf_2_file, 'rt') as vcf_2:	
 		
 		### 1) Header
 		
-		# skip vcf_2 header, only keep line with donor-ids
+		# vcf_2 header, keep line with donor-ids
 		v2 = vcf_2.readline()
 		while v2[:6] != "#CHROM":
+			if (args.header=="vcf2"):
+				sys.stdout.write(v2)
 			v2 = vcf_2.readline()
 		v2_donors = v2.rstrip().split()[9:]	
 		
-		# skip vcf_1 header, only keep line with donor-ids
+		# vcf_1 header, keep line with donor-ids
 		v1 = vcf_1.readline()
 		while v1[:6] != "#CHROM":
+			if (args.header=="vcf1"):
+				sys.stdout.write(v1)
 			v1 = vcf_1.readline()
+
+		# add default header
+		sys.stdout.write('##fileformat=VCFv4.1' + "\n")
+		sys.stdout.write('##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype calls or randomly sampled reads (for low-coverage archaics)">' + "\n")
+		sys.stdout.write('##reference=file:/mnt/solexa/Genomes/hg19_evan/whole_genome.fa' + "\n")
+		
+		# print combined donors
 		sys.stdout.write("\t".join([v1.rstrip()] + v2_donors) + "\n")
-	
+
 		#### 2) Genotypes
 			
 		v1 = vcf_1.readline().split()

@@ -15,7 +15,7 @@ import vcf_line_filter as F
 import base_to_gt as B
 
 def main():
-	parser = argparse.ArgumentParser(description='Merge a vcf files from STDIN with a file containing [chr | pos | base] (compressed or uncompressed). Optional filtering of vcf. Header is reduced to sample names; positions not in vcf are skipped. Writes to STDOUT.', usage='zcat file1.vcf.gz | merge_vcf_base.py base_file.gz newSample --filter1 "QUAL > 3" --require2')
+	parser = argparse.ArgumentParser(description='Merge a vcf files from STDIN with a file containing [chr | pos | base] (compressed or uncompressed). Optional filtering of vcf. Header is taken from vcf; positions not in vcf are skipped. Writes to STDOUT.', usage='zcat file1.vcf.gz | merge_vcf_base.py base_file.gz newSample --filter1 "QUAL > 3" --require2')
 	parser.add_argument("base_file", help="File with chrom, pos, base; 1-based")
 	parser.add_argument("base_name", help="Name of new column in the merged vcf-header")
 	parser.add_argument("--var", action="store_true", help="Restrict to variable sites")
@@ -33,9 +33,10 @@ def main():
 		sys.exit("Error: Needs vcf from stdin, e.g. 'zcat file1.vcf.gz | merge_vcf_base.py base_file.gz newSample'")
 	vcf_in = sys.stdin
 	
-	# skip vcf header, only keep line with donor-ids
+	# print header, add new sample to line with donor-ids
 	vcf = vcf_in.readline()
 	while vcf[:6] != "#CHROM":
+		sys.stdout.write(vcf)
 		vcf = vcf_in.readline()
 	sys.stdout.write("\t".join([vcf.rstrip()] + [args.base_name]) + "\n")
 
