@@ -18,6 +18,11 @@ genome_blocks = data.frame()
 for (i in 1:length(chroms)){
 	setwd(chroms[i])
 	print(getwd())
+	if (! "out_blocks" %in% dir()){
+	    message("skipping ", chroms[i], " (no out_blocks file).")
+	    setwd("../")
+	    next
+	}
 	## TODO: only use sites file if one is present
     sitesfile = FALSE
     if ("sites" %in% dir()){
