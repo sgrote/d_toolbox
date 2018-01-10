@@ -1,4 +1,6 @@
 
+library(gplots)
+
 # compute jackknife given all blocks, one pop1-pop2-pop3-pop4 combination
 d_jackknife = function(block_data){
 	
@@ -41,7 +43,6 @@ d_jackknife = function(block_data){
 }
 
 # plot d in heatmap given dataframe: [pop1, pop2, pop3, pop4, d, z] for one pop3
-library(gplots)
 plot_d = function(dtab, sub="", dendro=FALSE){
 	if(length(unique(dtab[,3])) != 1 | length(unique(dtab[,4])) != 1){
 		stop("Multiple populations in column 3 or 4")
@@ -92,8 +93,8 @@ plot_d = function(dtab, sub="", dendro=FALSE){
 	legend("topright", sub, bty="n")   	
 }
 
+
 # plot sites in heatmap given dataframe: [pop1, pop2, pop3, pop4, sites] for one pop3
-library(gplots)
 plot_sites = function(dtab, sub=""){
 	if(length(unique(dtab[,3])) != 1 | length(unique(dtab[,4])) != 1){
 		stop("Multiple populations in column 3 or 4")
@@ -123,6 +124,102 @@ plot_sites = function(dtab, sub=""){
 		breaks=breakys, col=heat.colors(100), symkey=F,
 		Rowv=FALSE, Colv=FALSE, dendrogram="none")		 
 	legend("topright", sub, bty="n")   	
+}
+
+
+
+# plot barplot for D(pop1, pop2, X, pop4) for one pop1-pop2-pop4 combi
+plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=0.8){	
+
+	# titel
+	pop1 = unique(input$pop1)
+	pop2 = unique(input$pop2)
+	pop4 = unique(input$pop4)
+	if (length(c(pop1, pop2, pop4)) != 3){
+		stop("pop1, pop2 or pop3 are not unique.")
+	}
+	# NEW: switch if median D is negative
+	if (median(input$d) < 0){
+		input$d = input$d * -1
+		input$z = input$z * -1
+		tmp_pop1 = pop1
+		pop1 = pop2
+		pop2 = tmp_pop1		
+	}
+	titel = paste0("D(", pop1, ", ", pop2, ", X, ", pop4, ")")
+	
+	# subtitel
+	subtitel = paste0(min(input$n_sites)," - ", max(input$n_sites), " informative sites")
+
+	# convert to %
+	input$se = 100 * (input$d / input$z)
+	input$d = 100 * input$d
+	input = cbind(input, superpops[match(input[,3], superpops[,1]), 2:4])
+
+	# merge with superpop-info and define spaces between bars
+	input = input[order(input$order, input$pop3),]
+	superbreak = c("dummy", input$super[-nrow(input)]) != input$super # for spaces
+	spaces = rep(0.2, nrow(input))
+	spaces[superbreak] = 0.8
+
+	# dynamic y-axis
+	if (is.null(ymin)) 	{
+		ymax = max((max(input$d + input$se)), 0)
+		ymin = min(min(input$d - input$se), 0)
+		span = ymax - ymin
+		ymax = ymax + abs(0.2*span)
+		ymin = ymin - abs(0.05*span)
+	}
+	
+	# x-axis (this approach would create an additional plot in pdf since type="n" is not available for barplot) TODO: maybe change to plot(..., type="h")
+	# and use this xlim in plot together with xaxs="i"
+#	# do a fake plot to get the x-coords of the bars
+#	bars = barplot(input$d, width=0.8, space=spaces, xaxs="i")
+#	side_space = (bars[nrow(bars),1] - bars[1,1]) * 0.05
+#	xlim=c(bars[1,1] - side_space, bars[nrow(bars),1] + side_space)
+		
+	input$asterix = ""
+	input[abs(input$z) > 2, "asterix"] = "*"
+	input[abs(input$z) > 3, "asterix"] = "**"
+	
+	# empty plot (to put horizontal lines before bars), panel.first didn't work with barplot
+	barplot(input$d, col="white", border="white", ylim=c(ymin,ymax), width=0.8, space=spaces, xaxt="n", yaxt="n", xlab="")
+	
+	# horizontal lines
+#	grid (NA, NULL, col="lightblue", lty=1) # NA: no lines on x-axis, NULL: autom lines at tick-marks on y
+	yaxp = par("yaxp")
+	hlines = seq(yaxp[1], yaxp[2], (yaxp[2]-yaxp[1])/yaxp[3])
+	abline(h=hlines[-length(hlines)], col="lightblue", lty=1)
+	
+	# barplot
+	bars = barplot(input$d, names.arg=input$pop3, col=colors()[input$color], main=titel, ylim=c(ymin,ymax), las=2, width=0.8, space=spaces, ylab="D[%]", cex.lab=mcex, cex.axis=0.8, cex.names=0.55, cex.main=1.2,  add=T)
+	# xlab
+	mtext("X", 1, 5.5, cex=mcex)
+
+	# error bars
+	arrows(c(bars,bars), c(input$d+input$se,input$d-input$se), c(bars,bars), c(input$d, input$d), angle=90, code=1, length=0.015)
+	# significance asterix
+	input$bars = bars
+	posi = input[input$d >= 0,]
+	nega = input[input$d < 0,]
+	if(nrow(posi) > 0){
+		text(x=posi$bars, y=posi$d+posi$se, labels=posi$asterix, pos=3, offset=0, cex=0.5)
+	}
+	if(nrow(nega) > 0){
+		text(x=nega$bars, y=nega$d-nega$se, labels=nega$asterix, pos=1, cex=0.5)		
+	}
+	
+	# subtitle
+	mtext(subtitel, line=-1, adj=0.5, cex=mcex) 
+	# label on y-axis ends
+	mtext(substring(pop1,1,3), side=1, adj=-0.03, line=0.5, cex=mcex)
+	mtext(substring(pop2,1,3), side=3, adj=-0.03, cex=mcex)
+
+	# legend Z-scores
+	legend("topleft",cex=legcex,ncol=2,legend=c("*", "**", "|Z| > 2","|Z| > 3"),bty="n",title="weighted block Jackknife")
+	# legend populations
+	legend("topright",cex=legcex,ncol=3,legend=unique(input$super),bty="n",fill=colors()[unique(input$color)],title="super populations")
+
 }
 
 
