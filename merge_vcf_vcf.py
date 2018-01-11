@@ -224,7 +224,7 @@ if __name__ == "__main__":
 
 
 ''' test
-VCF1=/mnt/scratch/steffi/D/Vcfs/Altai_Vindija_Denis/altai_vindija_denis_chr21_filtered_apes.vcf.gz
+VCF1=/mnt/scratch/steffi/D/Vcfs/mergedArchModernApes/merged_high_chr21.vcf.gz
 VCF2=/mnt/sequencedb/gendivdata/2_genotypes/human/SGDP/SGDP_v3_May2016/combined_vcf/c_team_chr21.vcf.gz
 MERGE=/mnt/expressions/steffi/D/d_toolbox/merge_vcf_vcf.py
 zcat $VCF1 | $MERGE $VCF2 | less -S

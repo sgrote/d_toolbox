@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
 ''' test
 SUBS=/mnt/expressions/steffi/D/d_toolbox/subsample_vcf.py
-VCF=/mnt/scratch/steffi/D/Vcfs/mergedArchaics/merged_archaics_manifesto_chr21.vcf.gz
+VCF=/mnt/scratch/steffi/D/Vcfs/mergedArchModernApes/merged_high_chr21.vcf.gz
 zcat $VCF | wc -l
 zcat $VCF | $SUBS 0.5 | wc -l
 zcat $VCF | $SUBS 0.75 | wc -l

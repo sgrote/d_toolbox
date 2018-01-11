@@ -27,7 +27,6 @@ def main():
 
 	# optional
 	parser.add_argument("-t", "--transver", action="store_true", help="Transversions only.")
-	#parser.add_argument("--startstop", default="/mnt/expressions/steffi/chromSizes/hg19_chrall_ranges.txt", help="optional: bed-file containing chr,start,stop for the boundaries of the chromosome to take into account (ugly but required for calculation of block borders...might change). Defaults to chrom-sizes for hg19 from UCSC.") #TODO: maybe use VinDenAlt manifesto here; later:
 	parser.add_argument("-c" ,"--centro", help="optional: bed-file containing chr,start,stop for the centromere of the chromosome. If defined the centromere will be excluded.")
 	parser.add_argument("-s", "--sitesfile", choices=["sites", "full"], help="optional: if 'sites' write a 'sites'-file with [block, pos] for every informative position. If 'full' the 'sites'-file also contains all derived allele freqs at informative positions for the populations provided.")
 

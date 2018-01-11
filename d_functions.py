@@ -245,9 +245,7 @@ def abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, block_size, centro_ra
     first = True
     for line in vcf:
         line = line.rstrip().split()
-        ### TODO: remove
-        #if int(line[1]) > 17419425:
-            #continue
+        # TODO: skip invariable sites already here
         #print(line)
         # get first pos for block-border and check if it's chrX
         if first:

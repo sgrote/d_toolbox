@@ -7,7 +7,7 @@ Header and QUAL, FILTER, INFO are kept, FORMAT is kept or "GT" if gt_only.
 Writes to STDOUT
 
 
-generate test-file /mnt/scratch/steffi/D/Vcfs/test_lines_SGDP
+generate test-file
 cd ~/Test
 CTEAM=/mnt/sequencedb/gendivdata/2_genotypes/human/SGDP/SGDP_v3_May2016/combined_vcf/c_team_chr21.vcf.gz
 zcat $CTEAM | head -n 10000 | cut -f -50 | awk '$6<1 {$7="LowQual"}; $6>100 {$7="PASS"}  1' OFS="\t" > test_lines_SGDP

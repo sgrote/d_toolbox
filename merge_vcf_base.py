@@ -101,8 +101,8 @@ if __name__ == "__main__":
 	main()
 
 ''' test
-VCF=/mnt/scratch/steffi/D/Vcfs/Altai_Vindija_Denis/altai_vindija_denis_chr21_filtered_apes.vcf.gz
-BASE=/mnt/scratch/steffi/D/Vcfs/Forbes_Quarry/FQDeam/ForbesDeam_chr21.tab.gz
+VCF=/mnt/scratch/steffi/D/Vcfs/mergedArchModernApes/merged_high_chr21.vcf.gz
+BASE=/mnt/scratch/steffi/D/random_bases/Forbes_Quarry/FQDeam/ForbesDeam_chr21.tab.gz
 MERGE=/mnt/expressions/steffi/D/d_toolbox/merge_vcf_base.py
 zcat $VCF | $MERGE $BASE ForbesDeam | less -S
 zcat $VCF | $MERGE $BASE ForbesDeam --require2 | less -S
