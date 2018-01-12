@@ -171,6 +171,10 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 		ymin = ymin - abs(0.05*span)
 	}
 	
+	# cex xlab names (0.5-1)
+	cexnames = 1 - (1/300) * nrow(input)
+	cexnames = max(0.5, cexnames)
+
 	# x-axis (this approach would create an additional plot in pdf since type="n" is not available for barplot) TODO: maybe change to plot(..., type="h")
 	# and use this xlim in plot together with xaxs="i"
 #	# do a fake plot to get the x-coords of the bars
@@ -189,12 +193,12 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 #	grid (NA, NULL, col="lightblue", lty=1) # NA: no lines on x-axis, NULL: autom lines at tick-marks on y
 	yaxp = par("yaxp")
 	hlines = seq(yaxp[1], yaxp[2], (yaxp[2]-yaxp[1])/yaxp[3])
-	abline(h=hlines[-length(hlines)], col="lightblue", lty=1)
+	abline(h=hlines[-length(hlines)], col="lightblue", lty=1) # omit top line
 	
 	# barplot
-	bars = barplot(input$d, names.arg=input$pop3, col=colors()[input$color], main=titel, ylim=c(ymin,ymax), las=2, width=0.8, space=spaces, ylab="D[%]", cex.lab=mcex, cex.axis=0.8, cex.names=0.55, cex.main=1.2,  add=T)
-	# xlab
-	mtext("X", 1, 5.5, cex=mcex)
+	bars = barplot(input$d, names.arg=input$pop3, col=colors()[input$color], main=titel, ylim=c(ymin,ymax), las=2, width=0.8, space=spaces, ylab="D[%]", cex.lab=mcex, cex.axis=0.8, cex.names=cexnames, cex.main=1.2,  add=T)
+#	# xlab
+#	mtext("X", 1, 5.5, cex=mcex)
 
 	# error bars
 	arrows(c(bars,bars), c(input$d+input$se,input$d-input$se), c(bars,bars), c(input$d, input$d), angle=90, code=1, length=0.015)
@@ -212,8 +216,8 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 	# subtitle
 	mtext(subtitel, line=-1, adj=0.5, cex=mcex) 
 	# label on y-axis ends
-	mtext(substring(pop1,1,3), side=1, adj=-0.03, line=0.5, cex=mcex)
-	mtext(substring(pop2,1,3), side=3, adj=-0.03, cex=mcex)
+	mtext(substring(pop1,1,3), side=3, adj=-0.03, cex=mcex)
+	mtext(substring(pop2,1,3), side=1, adj=-0.03, cex=mcex)
 
 	# legend Z-scores
 	legend("topleft",cex=legcex,ncol=2,legend=c("*", "**", "|Z| > 2","|Z| > 3"),bty="n",title="weighted block Jackknife")

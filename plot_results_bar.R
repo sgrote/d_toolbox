@@ -5,7 +5,7 @@
 ### command line arguments:
 # 1) infile (out_d)
 # 2) outfile.pdf
-# 3) .csv table with 3 columns like (superpops): 
+# 3) .csv table with 4 columns like (superpops): 
 	# pop			super	color	order
 	# CHB			EAS		123		6
 	# JPT			EAS		123		6
