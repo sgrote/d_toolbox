@@ -50,7 +50,7 @@ def main():
 		
 	for line in vcf:
 	
-		v = vcf.readline().split()
+		v = line.rstrip().split()
 		
 		## for every line: check if line passes and filter on individual genotypes
 		try:
@@ -68,12 +68,13 @@ if __name__ == "__main__":
 
 
 ''' test
-cat test_lines_SGDP | d_toolbox/vcf_filter.py --filter "QUAL > 0" | less -S
-cat test_lines_SGDP | d_toolbox/vcf_filter.py --filter "QUAL > 0" --keep_miss | less -S
-cat test_lines_SGDP | d_toolbox/vcf_filter.py --filter "QUAL > 0" --filter_ind "GF >= 0" | less -S
-cat test_lines_SGDP | d_toolbox/vcf_filter.py --filter_ind "GF >= 0" | less -S
+FILTER=/mnt/expressions/steffi/D/d_toolbox/vcf_filter.py
+cat test_lines_SGDP | $FILTER --filter "QUAL > 0" | less -S
+cat test_lines_SGDP | $FILTER --filter "QUAL > 0" --keep_miss | less -S
+cat test_lines_SGDP | $FILTER --filter "QUAL > 0" --filter_ind "GF >= 0" | less -S
+cat test_lines_SGDP | $FILTER --filter_ind "GF >= 0" | less -S
 # keep only lines where ALT allele is present after filtering individual genotypes
-cat test_lines_SGDP | d_toolbox/vcf_filter.py --filter_ind "GF >= 0" --var | less -S
+cat test_lines_SGDP | $FILTER --filter_ind "GF >= 0" --var | less -S
 
 '''
 
