@@ -103,7 +103,7 @@ def filter_on_info(filter_string, info_dict):
 	'''
 	filter_string = filter_string.split()
 	# find keywords (positions before relational operator)
-	key_indis = [i-1 for i, x in enumerate(filter_string) if x in ["<","<=",">",">+","==","!="]]
+	key_indis = [i-1 for i, x in enumerate(filter_string) if x in ["<","<=",">",">=","==","!="]]
 	for i in key_indis:
 		filter_string[i] = "info_dict['" + filter_string[i] + "']"
 	info_state = " ".join(filter_string)
