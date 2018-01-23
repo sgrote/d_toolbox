@@ -41,6 +41,9 @@ def main():
 	# from info-file and vcf-header: get col-numbers for every relevant pop and sex for every col
 	print("Read info file...")
 	pop_colnums, col_gender = D.get_pop_colnumbers(args.info, vcf_header, pops)
+	for pop in pop_colnums.keys():
+		print(pop)
+		print(len(pop_colnums[pop]))
 	#print(pop_colnums)
 	#print(col_gender)
 
@@ -74,7 +77,7 @@ def allele_freqs(vcf, pop_colnums, pops, col_gender, transver=False):
 				ref = line[3]
 				alt = line[4]
 				## reduce to biallelic 
-				if alt not in "ACTG":
+				if alt not in ["A","C","T","G"] or ref not in ["A","C","T","G"]:
 					#print("Skipping non-biallelic:", line[:7])
 					nbial_county += 1
 					continue
@@ -95,7 +98,7 @@ def allele_freqs(vcf, pop_colnums, pops, col_gender, transver=False):
 					#print("Uninformative site:", pset) 
 					continue
 				line_count += 1
-				if line_count % 5000 == 0:
+				if line_count % 100000== 0:
 					print(line_count)
 				out.write("\t".join(line[0:2] + line[3:5]) + "\t" + "\t".join(map(str,p)) + "\n")
 			except (IndexError, ValueError) as errore:
