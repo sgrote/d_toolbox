@@ -119,7 +119,7 @@ def get_pop_colnumbers(info_file, vcf_header, pops):
     col_gender = {}
     info = pd.read_csv(info_file)
     # for each donor-id from vcf-header, get population and sex if present in info-file
-    for i in range(len(vcf_header)):
+    for i in range(9, len(vcf_header)):
         if any(info['sample'] == vcf_header[i]):
             sample_info = info[info['sample'] == vcf_header[i]]
             # add col-number to population
@@ -170,6 +170,8 @@ def get_p(vcf_line, pop, col_gender, X=False):
     ac = 0
     sum_alleles = 0
     # count alternative alleles and total number of alleles for one population  
+    # TODO: SGDP male X-genotypes: {'0/1': 84318, '1/1': 4259919, './.': 2997653, '0/0': 25124854}
+    #       how to distinguish between haploid and homozygous diploid/pseudorecombining (ask Cee?)
     for colnumber in pop:
         # X-ch for males (handle 1|., 0, ., ./., 1|1, and so on) (take X as input to not check every line)
         if X and col_gender[colnumber]=="male":
@@ -248,6 +250,7 @@ def abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, block_size, centro_ra
         # TODO: skip invariable sites already here
         #print(line)
         # get first pos for block-border and check if it's chrX
+        # TODO: also try to change this to not do the check for every line
         if first:
             block_end = int(line[1]) + block_size
             X = True if line[0]=="X" else False
