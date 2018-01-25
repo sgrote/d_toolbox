@@ -193,20 +193,22 @@ def main():
 					v2 = vcf_2.readline().split()
 				## positions are present in both vcfs	
 				elif v1[1] == v2[1]:
-					v1_pass = F.check_filter(v1, args.filter1)
-					v2_pass = F.check_filter(v2, args.filter2)
-					if v1_pass and not v2_pass:
-						# fill2=False because v2 did not pass filter and should be ./. and not 0/0
-						v1, gt2 = filter_and_fill(v1, n_v2, None, args.filter_ind1, args.gt_only, False, args.var, args.keep_miss)
-						if v1: # could fail despite v1_pass when individual GTs don't pass or invariable
-							out = v1 + gt2
-					elif v2_pass and not v1_pass:
-						v2, gt1 = filter_and_fill(v2, n_v1, None, args.filter_ind2, args.gt_only, False, args.var, args.keep_miss)
-						if v2:
-							out = v2[:9] + gt1 + v2[9:]
-					# both pass line-filter: merge, filter individual genotypes and check var again
-					elif v1_pass and v2_pass:
-						out = merge_and_filter(v1, v2, args.filter_ind1, args.filter_ind2, args.gt_only, args.var)
+					# (NEW: also check that REF-alleles match (no-match seen in indels in 1000 genomes))
+					if v1[3] == v2[3]:
+						v1_pass = F.check_filter(v1, args.filter1)
+						v2_pass = F.check_filter(v2, args.filter2)
+						if v1_pass and not v2_pass:
+							# fill2=False because v2 did not pass filter and should be ./. and not 0/0
+							v1, gt2 = filter_and_fill(v1, n_v2, None, args.filter_ind1, args.gt_only, False, args.var, args.keep_miss)
+							if v1: # could fail despite v1_pass when individual GTs don't pass or invariable
+								out = v1 + gt2
+						elif v2_pass and not v1_pass:
+							v2, gt1 = filter_and_fill(v2, n_v1, None, args.filter_ind2, args.gt_only, False, args.var, args.keep_miss)
+							if v2:
+								out = v2[:9] + gt1 + v2[9:]
+						# both pass line-filter: merge, filter individual genotypes and check var again
+						elif v1_pass and v2_pass:
+							out = merge_and_filter(v1, v2, args.filter_ind1, args.filter_ind2, args.gt_only, args.var)
 					# read next lines from both files (also if not (v1_pass or v2_pass))
 					v1 = vcf_1.readline().split()
 					v2 = vcf_2.readline().split()
