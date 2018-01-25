@@ -142,7 +142,7 @@ def main():
 		# vcf_2 header, keep line with donor-ids
 		v2 = vcf_2.readline()
 		while v2[:6] != "#CHROM":
-			if (args.header=="vcf2"):
+			if args.header=="vcf2":
 				sys.stdout.write(v2)
 			v2 = vcf_2.readline()
 		v2_donors = v2.rstrip().split()[9:]	
@@ -150,14 +150,15 @@ def main():
 		# vcf_1 header, keep line with donor-ids
 		v1 = vcf_1.readline()
 		while v1[:6] != "#CHROM":
-			if (args.header=="vcf1"):
+			if args.header=="vcf1":
 				sys.stdout.write(v1)
 			v1 = vcf_1.readline()
 
 		# add default header
-		sys.stdout.write('##fileformat=VCFv4.1' + "\n")
-		sys.stdout.write('##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype calls or randomly sampled reads (for low-coverage archaics)">' + "\n")
-		sys.stdout.write('##reference=file:/mnt/solexa/Genomes/hg19_evan/whole_genome.fa' + "\n")
+		if not args.header:
+			sys.stdout.write('##fileformat=VCFv4.1' + "\n")
+			sys.stdout.write('##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype calls or randomly sampled reads (for low-coverage archaics)">' + "\n")
+			sys.stdout.write('##reference=file:/mnt/solexa/Genomes/hg19_evan/whole_genome.fa' + "\n")
 		
 		# print combined donors
 		sys.stdout.write("\t".join([v1.rstrip()] + v2_donors) + "\n")
