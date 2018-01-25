@@ -258,7 +258,7 @@ def filter_gt(vcf_line, filter_ind=None, gt_only=False):
 		vcf_line = filter_genotypes(filter_ind, vcf_line, gt_only) # this does gt_only on the fly
 	elif gt_only:
 		vcf_line = genotypes_only(vcf_line)
-	return vcf_line[:]
+	return vcf_line
 
 ''' test
 vcf_line = ['21','148','.','C','T','0','.','.','GT:GF','0/1:-1','0/1:3','./0:-1']
