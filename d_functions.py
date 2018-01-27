@@ -247,8 +247,9 @@ def abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, block_size, centro_ra
     first = True
     for line in vcf:
         line = line.rstrip().split()
-        # TODO: skip invariable sites already here
-        #print(line)
+        # skip invariable sites
+        if line[4] == ".":
+            continue
         # get first pos for block-border and check if it's chrX
         # TODO: also try to change this to not do the check for every line
         if first:
@@ -264,7 +265,7 @@ def abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, block_size, centro_ra
         alt = line[4]
         ## reduce to biallelic 
         # TODO: add fancy biallelic version that evaluates biallelic for pops of interest or even comps
-        if alt not in "ACTG":
+        if alt not in ["A","C","T","G"] and ref not in ["A","C","T","G"]:
             #print("Skipping non-biallelic:", line[:7])
             nbial_county += 1
             continue
@@ -328,7 +329,7 @@ def abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, block_size, centro_ra
         for i in range(n_comp):
             block_sum[0][i] += abba[i]
             block_sum[1][i] += baba[i]  
-        ## add to sites counter and TODO sites file
+        ## add to sites counter and sites file
         blocksites += 1
         if sitesfile and sitesfile == "sites":
             sites_file.write('\t'.join([str(block_count+1)] + [line[1]]) + "\n")
