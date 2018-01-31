@@ -158,6 +158,13 @@ def get_sample_header(vcf):
 	return v.rstrip().split()
 
 
+
+
+# TODO: SGDP male X-genotypes: {'0/1': 84318, '1/1': 4259919, './.': 2997653, '0/0': 25124854}
+#       how to distinguish between haploid and homozygous diploid/pseudorecombining (ask Cee?)
+#       1000 genomes has {'1': 116179771, '0': 3914561345, '1|0': 3093771, '0|1': 3151250,
+#       '1|1':      3558260, '0|0': 122262116}
+
 def get_p(vcf_line, pop, col_gender, X=False):
 	'''
 	alternative allele-freqs for one population for one biallelic site
@@ -167,18 +174,23 @@ def get_p(vcf_line, pop, col_gender, X=False):
 		X = T/F if its X-chrom
 	out: ALT-allele-freq
 	'''
+	
 	ac = 0
 	sum_alleles = 0
+	
+	## NEW: pre-check for all-REF or all missing
+	genotypes = [vcf_line[colnumber] for colnumber in pop]
+	if all([g in ["0/0", "0|0"] for g in genotypes]):
+		return 0.0
+	if all([g in ["./.", ".|."] for g in genotypes]):
+		return None
+	
 	# count alternative alleles and total number of alleles for one population  
-	# TODO: SGDP male X-genotypes: {'0/1': 84318, '1/1': 4259919, './.': 2997653, '0/0': 25124854}
-	#       how to distinguish between haploid and homozygous diploid/pseudorecombining (ask Cee?)
-	#       1000 genomes has {'1': 116179771, '0': 3914561345, '1|0': 3093771, '0|1': 3151250,
-	#       '1|1':      3558260, '0|0': 122262116}
-	for colnumber in pop:
-		gt = vcf_line[colnumber]
+	for i in range(len(pop)):
+		gt = genotypes[i]
 		# NEW: handle male chrom X with two alleles (recombining part of XY) like autosome
 		# (although unclear for SGDP!! - this works for 100 genoems)
-		if X and col_gender[colnumber]=="male" and not len(gt) == 3:
+		if X and col_gender[pop[i]]=="male" and not len(gt) == 3:
 			# haploid genotype like in 1000 genomes
 			if gt == "1":
 				ac += 1
@@ -206,9 +218,9 @@ def get_p(vcf_line, pop, col_gender, X=False):
 	return daf
 
 ''' test
-vcf_line1 = ['21','148','.','C','T','0','.','.','GT','0/1','1/1','./0','./.','1|.','1|1','.|.']
-vcf_line2 = ['X','148','.','C','T','0','.','.','GT','1/1','1','./0','./.','1|.','1/0','.']
-col_gender = {9:"male", 10:"male", 11:"female", 12:"female", 13:"male", 14:"female", 15:"male"}
+vcf_line1 = ['21','148','.','C','T','0','.','.','GT','0/1','1/1','./0','./.','1|.','1|1','.|.','0/0','0|0']
+vcf_line2 = ['X','148','.','C','T','0','.','.','GT','1/1','1','./0','./.','1|.','1/0','.','0/.','0|0']
+col_gender = {9:"male", 10:"male", 11:"female", 12:"female", 13:"male", 14:"female", 15:"male", 16:"female", 17:"male"}
 
 get_p(vcf_line1, [9,10], col_gender) == 0.75
 get_p(vcf_line1, [9,10,11], col_gender) == 3.0/5
@@ -221,6 +233,10 @@ get_p(vcf_line2, [10,14], col_gender, True) == 2.0/3  # but still count as haplo
 get_p(vcf_line2, [9,10,11], col_gender, True) == 0.75
 get_p(vcf_line2, [9,10,11,12], col_gender, True) == 0.75
 get_p(vcf_line2, [9,10,11,12,13], col_gender, True) == 0.8
+get_p(vcf_line1, [12,15], col_gender, True) == None
+get_p(vcf_line2, [12,15], col_gender, True) == None
+get_p(vcf_line2, [16,17], col_gender, True) == 0
+get_p(vcf_line1, [16,17], col_gender, True) == 0
 
 '''
 
