@@ -59,8 +59,9 @@ def main():
 			if out:
 				sys.stdout.write("\t".join(out) + "\n")
 		except (IndexError, ValueError) as errore:
-			print(errore)
-			print(v)
+			sys.stderr.write(str(errore) + "\n")
+			sys.stderr.write("\t".join(v[:12]) + "\n")
+			sys.exit()
 
 
 if __name__ == "__main__":
@@ -68,14 +69,20 @@ if __name__ == "__main__":
 
 
 ''' test
+VCF=/mnt/sequencedb/gendivdata/2_genotypes/human/SGDP/SGDP_v3_May2016/combined_vcf/c_team_chr21.vcf.gz
 FILTER=/mnt/expressions/steffi/D/d_toolbox/vcf_filter.py
-cat test_lines_SGDP | $FILTER --filter "QUAL > 0" | less -S
-cat test_lines_SGDP | $FILTER --filter "QUAL > 0" --keep_miss | less -S
-cat test_lines_SGDP | $FILTER --filter "QUAL > 0" --filter_ind "GF >= 0" | less -S
-cat test_lines_SGDP | $FILTER --filter_ind "GF >= 0" | less -S
+zcat $VCF | $FILTER --filter "QUAL > 0" | less -S
+zcat $VCF | $FILTER --filter "QUAL > 0" --keep_miss | less -S
+zcat $VCF | $FILTER --filter "QUAL > 0" --filter_ind "GF >= 0" | less -S
+zcat $VCF | $FILTER --filter_ind "GF >= 0" | less -S
 # keep only lines where ALT allele is present after filtering individual genotypes
-cat test_lines_SGDP | $FILTER --filter_ind "GF >= 0" --var | less -S
+zcat $VCF | $FILTER --filter_ind "GF >= 0" --var | less -S
 
+VCF2=/mnt/sequencedb/1000Genomes/ftp/phase3/20140910/ALL.chr21.phase3_shapeit2_mvncall_integrated_v5.20130502.genotypes.vcf.gz
+zcat $VCF2 | $FILTER --filter "QUAL > 90" | less -S
+zcat $VCF2 | $FILTER --filter 'FILTER == "PASS"' | less -S
+zcat $VCF2 | $FILTER --filter 'FILTER == "PASS" and SAS_AF == 0.002' | less -S
+zcat $VCF2 | $FILTER --filter 'SAS_AF == 0.002 and AMR_AF == 0.0043' | less -S
 '''
 
 

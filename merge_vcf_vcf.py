@@ -217,9 +217,10 @@ def main():
 				if out:
 					sys.stdout.write("\t".join(out) + "\n")
 			except (IndexError, ValueError) as errore:
-				print(errore)
-				print(v1)
-				print(v2)
+				sys.stderr.write(str(errore) + "\n")
+				sys.stderr.write("\t".join(v1) + "\n")
+				sys.stderr.write("\t".join(v2) + "\n")
+				sys.exit()
 
 
 if __name__ == "__main__":

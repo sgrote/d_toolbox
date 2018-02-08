@@ -104,6 +104,8 @@ def allele_freqs(vcf, pop_colnums, pops, col_gender, transver=False):
 			except (IndexError, ValueError) as errore:
 				print(errore)
 				print(line)
+				sys.exit()
+	
 	print("Number of skipped non-biallelic sites: %d" % nbial_county)
 	print("Number of skipped transitions: %d" % trans_county)
 	print("Number of valid lines: %d" % line_count)

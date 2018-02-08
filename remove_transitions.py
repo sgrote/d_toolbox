@@ -38,8 +38,9 @@ def main():
 			# print valid line
 			sys.stdout.write(line)
 		except (IndexError, ValueError) as errore:
-			print(errore)
-			print(line)
+			sys.stderr.write(str(errore) + "\n")
+			sys.stderr.write(line + "\n")
+			sys.exit()
 
 if __name__ == "__main__":
 	main()

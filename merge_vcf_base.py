@@ -92,9 +92,10 @@ def main():
 				if out:
 					sys.stdout.write("\t".join(out) + "\n")
 			except (IndexError, ValueError) as errore:
-				print(errore)
-				print(vcf)
-				print(base)
+				sys.stderr.write(str(errore) + "\n")
+				sys.stderr.write("\t".join(vcf) + "\n")
+				sys.stderr.write("\t".join (base) + "\n")
+				sys.exit()
 
 
 if __name__ == "__main__":
