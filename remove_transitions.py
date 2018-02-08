@@ -30,7 +30,7 @@ def main():
 			ref = fields[args.ref_index]
 			alt = fields[args.alt_index]
 			# reduce to biallelic 
-			if alt not in "ACTG":
+			if alt not in ["A","C","T","G"]:
 				continue
 			# reduce to transversions 
 			if ("A" in ref+alt and "G" in ref+alt) or ("C" in ref+alt and "T" in ref+alt):

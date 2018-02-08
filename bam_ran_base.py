@@ -55,7 +55,7 @@ def sample_base(pos, min_reads, min_qual):
         if len(bases) == 0:
             return(None)
         
-    if any([base not in "ACTG" for base in bases]):
+    if any([base not in ["A","C","T","G"] for base in bases]):
         print("unclean!")
         print(pos)
         print(bases)
