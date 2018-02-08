@@ -17,7 +17,7 @@ def main():
 	parser = argparse.ArgumentParser(description='Takes pop1-pop4 and pop-info from files, vcf from stdin and calculates blockwise ABBA and BABA for all combinations of pop1-pop4. Writes to file "out_blocks" containing lines with the 4 pops and ABBA, BABA for every block.', usage='zcat file.vcf.gz | d_stats.py pop1 pop2 pop3 pop4 -i pop-info -n 20 -t')
 	# mandatory
 	parser.add_argument("chrom", help="chromosome number, e.g. '21'") 
-	parser.add_argument("pop1", help="File with populations like in pop-column of info-file. Used in position one of D-stats.")
+	parser.add_argument("pop1", help="File with populations like in pop-column of info-file. Used in position one of D-stats. Or (NEW) a comma-separated string of populations - only with option -l, --poplist.")
 	parser.add_argument("pop2", help="Like pop1 for position two of D-stats.")
 	parser.add_argument("pop3", help="Like pop1 for position three of D-stats.")
 	parser.add_argument("pop4", help="Like pop1 for position four of D-stats.")
@@ -47,10 +47,12 @@ def main():
 	vcf_header = D.get_sample_header(vcf)
 	#print(vcf_header)
 
+	## get populations
+	pops = D.get_pops_from_args(args.pop1, args.pop2, args.pop3, args.pop4)
+
 	## get population matches pop1, pop2, pop3, pop4
-	pw_pops = D.get_pops_from_files(args.pop1, args.pop2, args.pop3, args.pop4)
+	pw_pops = D.get_pw_pops(pops)
 	#D.print_table(pw_pops)
-	#D.print_table_to_file(pw_pops, "pw_pops") # TODO: is that needed? was active in original d_stats.py
 	
 	## get unique pops
 	pops = D.get_unique_pops(pw_pops)
@@ -59,6 +61,8 @@ def main():
 	pop_colnums, col_gender = D.get_pop_colnumbers(args.info, vcf_header, pops)
 	#print(pop_colnums)
 	#print(col_gender)
+
+	sys.exit()
 
 	# compute blockwise ABBA  [ [[abba][baba]] [[abba][baba]] ...] (NEW param-Afr fixed)
 	blocks, sites_comp = D.abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, args.blocksize, centro_range, args.transver, args.sitesfile)

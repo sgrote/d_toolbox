@@ -12,6 +12,7 @@ Use this info to calculate abba, baba counts per block and population match
 #import csv
 import pandas as pd
 import sys
+import os.path
 
 
 def get_range(chrom ,ranges_file):
@@ -35,22 +36,45 @@ def get_range(chrom ,ranges_file):
 	print("Error, Chromosome range not found")
 
 
+def get_pops_from_args(apop1, apop2, apop3, apop4):
+	'''
+	in: pop-arguments (either file-names or comma-separated strings)
+	out: list [[pop1][pop2][pop3][pop4]] for single populations per 'column'
+	'''
+	if os.path.isfile(apop1): 
+		print("Looks like pop-files")
+		return(get_pops_from_files(apop1, apop2, apop3, apop4))
+	else:
+		print("Looks like pop-lists.")
+		poplists = [apop1, apop2, apop3, apop4]
+		pops = list()
+		for p in poplists:
+			pops.append(p.split(","))
+		return pops
+
+
 def get_pops_from_files(pop1, pop2, pop3, pop4):
 	'''
 	in: files with one column containing population names
-	out: list [[pop1][pop2][pop3][pop4]] for all matches,
-	 avoiding self-matches and duplicates (including D(w,x,y,z), D(x,w,y,z))
+	out: list [[pop1][pop2][pop3][pop4]] for single populations per 'column'
 	'''
-	# TODO: maybe use a pandas df here?
 	pop_files = [pop1, pop2, pop3, pop4]
 	pops = [[] for k in range(4)]
-	pw_pops = [[] for k in range(4)]
 	# read populations
 	for i in range(4):
 		with open(pop_files[i], "r") as p:
 			for pop in p:
 				pops[i].append(pop.rstrip())
-	print(pops)
+	return pops
+
+
+def get_pw_pops(pops):
+	'''
+	in: list [[pop1][pop2][pop3][pop4]] for single populations per 'column'
+	out: list [[pop1][pop2][pop3][pop4]] for all matches,
+	 avoiding self-matches and duplicates (including D(w,x,y,z), D(x,w,y,z))
+	'''
+	pw_pops = [[] for k in range(4)]
 	# generate all possible combinations (That's ugly!)
 	for i in range(len(pops[0])):
 		for j in range(len(pops[1])):
