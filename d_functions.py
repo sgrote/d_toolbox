@@ -277,6 +277,7 @@ def abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, block_size, centro_ra
 		if first:
 			block_end = int(line[1]) + block_size
 			X = True if line[0]=="X" else False
+			print("starting block 1 until position", block_end)
 			first = False
 		# exclude centromere (usually not needed because of manifesto)
 		if centro_range and (int(line[1]) > centro_range[0] and int(line[1]) < centro_range[1]):

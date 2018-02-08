@@ -98,7 +98,7 @@ def allele_freqs(vcf, pop_colnums, pops, col_gender, transver=False):
 					#print("Uninformative site:", pset) 
 					continue
 				line_count += 1
-				if line_count % 100000== 0:
+				if line_count % 50000 == 0:
 					print(line_count)
 				out.write("\t".join(line[0:2] + line[3:5]) + "\t" + "\t".join(map(str,p)) + "\n")
 			except (IndexError, ValueError) as errore:
