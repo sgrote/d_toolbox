@@ -38,17 +38,20 @@ def get_info_dict(info_field):
 	info_dict = {}
 	for info in info_field:
 		i = info.split("=")
-		# convert to number if possible
-		try:
-			info_dict[i[0]] = float(i[1])
-		except ValueError:
-			info_dict[i[0]] = i[1]
+		# NEW: check for 'key=value' format, skip if not (see test below))
+		if len(i) == 2:
+			# convert to number if possible
+			try:
+				info_dict[i[0]] = float(i[1])
+			except ValueError:
+				info_dict[i[0]] = i[1]
 	return info_dict
 
 ''' test
 get_info_dict("AC=27;AN=558;AF=0.048;GF0=0;GF1=0")
 get_info_dict("AC=27;AN=558;AF=0.048;GF0=0;GF1=blabla")
-
+# example from 1000genomes that doesn't follow 'key=value' (IMPRECISE)
+get_info_dict("AC=1;AF=0.000199681;AN=5008;CIEND=-150,150;CIPOS=-150,150;CS=DUP_delly;END=16199729;NS=2504;SVLEN=257387;SVTYPE=DUP;IMPRECISE;DP=15412;EAS_AF=0;AMR_AF=0;AFR_AF=0.0008;EUR_AF=0;SAS_AF=0")
 '''
 
 
@@ -79,7 +82,6 @@ def filter_line(filter_string, vcf_line):
 vcf_line1 = ['21', '14896202', '.', 'C', 'T', '0', '.', 'AC=27;AN=558;AF=0.048;GF0=0;GF1=0', 'GT:GF']
 vcf_line2 = ['21', '14896202', '.', 'C', 'T', '0', 'LowQual', 'AC=27;AN=558;AF=0.048;GF0=0;GF1=0', 'GT:GF']
 vcf_line3 = ['21', '14896202', '.', 'C', 'T', '100', 'PASS', 'AC=27;AN=558;AF=a_string']
-
 filter_line("QUAL > 0 and AC == 27", vcf_line1) == False
 filter_line("( QUAL > 0 or FILTER != 'LowQual') and AC == 27", vcf_line1) == True
 filter_line("( QUAL > 0 and FILTER == 'PASS')", vcf_line1) == False
@@ -90,6 +92,11 @@ filter_line("AF == 'bla' or ( QUAL > 0 and FILTER == 'PASS')", vcf_line3) == Tru
 filter_line("AF == 'bla' and ( QUAL > 0 and FILTER == 'PASS')", vcf_line3) == False
 filter_line("AF == 'a_string' and ( QUAL > 0 and FILTER == 'PASS')", vcf_line3) == True
 
+# line causing index error when filtering on INFO-field 
+vcf_g1000 = ['21','15942342','DUP_delly_DUP57211','A','<CN2>','100','PASS','AC=1;AF=0.000199681;AN=5008;CIEND=-150,150;CIPOS=-150,150;CS=DUP_delly;END=16199729;NS=2504;SVLEN=257387;SVTYPE=DUP;IMPRECISE;DP=15412;EAS_AF=0;AMR_AF=0;AFR_AF=0.0008;EUR_AF=0;SAS_AF=0','GT','0|0']
+filter_line("QUAL > 0 and FILTER == 'PASS'", vcf_g1000) == True
+filter_line("SAS_AF == 0", vcf_g1000) == True
+filter_line("SAS_AF == 0.2", vcf_g1000) == False
 '''
 
 
