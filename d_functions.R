@@ -129,8 +129,8 @@ plot_sites = function(dtab, sub=""){
 
 
 # plot barplot for D(pop1, pop2, X, pop4) for one pop1-pop2-pop4 combi
-plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=0.8){	
-
+plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=0.8, auto_switch=TRUE){
+	
 	# titel
 	pop1 = unique(input$pop1)
 	pop2 = unique(input$pop2)
@@ -139,7 +139,7 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 		stop("pop1, pop2 or pop3 are not unique.")
 	}
 	# NEW: switch if median D is negative
-	if (median(input$d) < 0){
+	if (auto_switch && (median(input$d) < 0)){
 		input$d = input$d * -1
 		input$z = input$z * -1
 		tmp_pop1 = pop1
@@ -155,6 +155,9 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 	input$se = 100 * (input$d / input$z)
 	input$d = 100 * input$d
 	input = cbind(input, superpops[match(input[,3], superpops[,1]), 2:4])
+	
+	# replace se=NA (caused by D=0)
+	input$se[is.na(input$se)] = 0
 
 	# merge with superpop-info and define spaces between bars
 	input = input[order(input$order, input$pop3),]
@@ -201,7 +204,7 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 #	mtext("X", 1, 5.5, cex=mcex)
 
 	# error bars
-	arrows(c(bars,bars), c(input$d+input$se,input$d-input$se), c(bars,bars), c(input$d, input$d), angle=90, code=1, length=0.015)
+	suppressWarnings(arrows(c(bars,bars), c(input$d+input$se,input$d-input$se), c(bars,bars), c(input$d, input$d), angle=90, code=1, length=0.015))
 	# significance asterix
 	input$bars = bars
 	posi = input[input$d >= 0,]
