@@ -128,25 +128,33 @@ plot_sites = function(dtab, sub=""){
 
 
 
-# plot barplot for D(pop1, pop2, X, pop4) for one pop1-pop2-pop4 combi
+# plot barplot for D(pop1, pop2, pop3, pop4) with 3 pops fixed combi
 plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=0.8, auto_switch=TRUE){
 	
-	# titel
-	pop1 = unique(input$pop1)
-	pop2 = unique(input$pop2)
-	pop4 = unique(input$pop4)
-	if (length(c(pop1, pop2, pop4)) != 3){
-		stop("pop1, pop2 or pop3 are not unique.")
-	}
-	# NEW: switch if median D is negative
+	# switch pop1-pop2 if median D is negative
 	if (auto_switch && (median(input$d) < 0)){
 		input$d = input$d * -1
 		input$z = input$z * -1
-		tmp_pop1 = pop1
-		pop1 = pop2
-		pop2 = tmp_pop1		
+		input[,c(1,2)] = input[,c(2,1)]
 	}
-	titel = paste0("D(", pop1, ", ", pop2, ", X, ", pop4, ")")
+	
+	# check which pop-position is variable 
+	n_pops = apply(input[,1:4], 2, function(x) length(unique(x))) 
+	varcol = which(n_pops != 1)
+	if (length(varcol) != 1){
+		stop("More than one of [pop1, pop2, pop3, pop4] is not unique.")
+	}
+	
+	# title
+	if (varcol == 1){
+		titel = paste0("D(X, ",unique(input$pop2),", ",unique(input$pop3),", ",unique(input$pop4),")")
+	} else if (varcol == 2){
+		titel = paste0("D(",unique(input$pop1),", X, ",unique(input$pop3),", ",unique(input$pop4),")")
+	} else if (varcol == 3){
+		titel = paste0("D(",unique(input$pop1),", ",unique(input$pop2),", X, ",unique(input$pop4),")")
+	} else if (varcol == 4){
+		titel = paste0("D(",unique(input$pop1),", ",unique(input$pop2),", ",unique(input$pop3),", X)")
+	}
 	
 	# subtitel
 	subtitel = paste0(min(input$n_sites)," - ", max(input$n_sites), " informative sites")
@@ -154,13 +162,13 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 	# convert to %
 	input$se = 100 * (input$d / input$z)
 	input$d = 100 * input$d
-	input = cbind(input, superpops[match(input[,3], superpops[,1]), 2:4])
 	
 	# replace se=NA (caused by D=0)
 	input$se[is.na(input$se)] = 0
 
 	# merge with superpop-info and define spaces between bars
-	input = input[order(input$order, input$pop3),]
+	input = cbind(input, superpops[match(input[,varcol], superpops[,1]), 2:4])
+	input = input[order(input$order, input[,varcol]),]
 	superbreak = c("dummy", input$super[-nrow(input)]) != input$super # for spaces
 	spaces = rep(0.2, nrow(input))
 	spaces[superbreak] = 0.8
@@ -199,7 +207,7 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 	abline(h=hlines[-length(hlines)], col="lightblue", lty=1) # omit top line
 	
 	# barplot
-	bars = barplot(input$d, names.arg=input$pop3, col=colors()[input$color], main=titel, ylim=c(ymin,ymax), las=2, width=0.8, space=spaces, ylab="D[%]", cex.lab=mcex, cex.axis=0.8, cex.names=cexnames, cex.main=1.2,  add=T)
+	bars = barplot(input$d, names.arg=input[,varcol], col=colors()[input$color], main=titel, ylim=c(ymin,ymax), las=2, width=0.8, space=spaces, ylab="D[%]", cex.lab=mcex, cex.axis=0.8, cex.names=cexnames, cex.main=1.2,  add=T)
 #	# xlab
 #	mtext("X", 1, 5.5, cex=mcex)
 
@@ -218,9 +226,9 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 	
 	# subtitle
 	mtext(subtitel, line=-1, adj=0.5, cex=mcex) 
-	# label on y-axis ends
-	mtext(substring(pop1,1,3), side=3, adj=-0.03, cex=mcex)
-	mtext(substring(pop2,1,3), side=1, adj=-0.03, cex=mcex)
+#	# label on y-axis ends # TODO: not applicable anymore now that also pop1 or pop2 could be X-axis
+#	mtext(substring(pop1,1,3), side=3, adj=-0.03, cex=mcex)
+#	mtext(substring(pop2,1,3), side=1, adj=-0.03, cex=mcex)
 
 	# legend Z-scores
 	legend("topleft",cex=legcex,ncol=2,legend=c("*", "**", "|Z| > 2","|Z| > 3"),bty="n",title="weighted block Jackknife")
