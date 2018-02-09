@@ -68,6 +68,20 @@ def get_pops_from_files(pop1, pop2, pop3, pop4):
 	return pops
 
 
+def check_pw_pops(pops):
+	'''
+	check that pops [[pop1][pop2][pop3][pop4]] have same length length
+	'''
+	l = len(pops[0])
+	if any([len(pops[i]) != l for i in range(1,4)]):
+		sys.exit("pop-lists have differing lengths (not valid for option -f/--fixedpairs). ")
+	return True
+
+''' test
+check_pw_pops([["a","b"], ["c","d"], ["e","f"], ["s","f"]])
+check_pw_pops([["a","b"], ["c","d"], ["e","f"], ["s"]])
+'''
+
 def get_pw_pops(pops):
 	'''
 	in: list [[pop1][pop2][pop3][pop4]] for single populations per 'column'

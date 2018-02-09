@@ -29,6 +29,7 @@ def main():
 	parser.add_argument("-t", "--transver", action="store_true", help="Transversions only.")
 	parser.add_argument("-c" ,"--centro", help="optional: bed-file containing chr,start,stop for the centromere of the chromosome. If defined the centromere will be excluded.")
 	parser.add_argument("-s", "--sitesfile", choices=["sites", "full"], help="optional: if 'sites' write a 'sites'-file with [block, pos] for every informative position. If 'full' the 'sites'-file also contains all derived allele freqs at informative positions for the populations provided.")
+	parser.add_argument("-f", "--fixedpairs", action="store_true", help="Don't create all possible combinations of pop1-pop4 but just paste them (all need same length then).")
 
 	args = parser.parse_args()
 
@@ -51,8 +52,12 @@ def main():
 	pops = D.get_pops_from_args(args.pop1, args.pop2, args.pop3, args.pop4)
 
 	## get population matches pop1, pop2, pop3, pop4
-	pw_pops = D.get_pw_pops(pops)
-	#D.print_table(pw_pops)
+	if args.fixedpairs and D.check_pw_pops(pops):
+		pw_pops = pops
+	else:
+		pw_pops = D.get_pw_pops(pops)
+	print("pop-matches:")
+	D.print_table(pw_pops)
 	
 	## get unique pops
 	pops = D.get_unique_pops(pw_pops)
@@ -61,8 +66,6 @@ def main():
 	pop_colnums, col_gender = D.get_pop_colnumbers(args.info, vcf_header, pops)
 	#print(pop_colnums)
 	#print(col_gender)
-
-	sys.exit()
 
 	# compute blockwise ABBA  [ [[abba][baba]] [[abba][baba]] ...] (NEW param-Afr fixed)
 	blocks, sites_comp = D.abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, args.blocksize, centro_range, args.transver, args.sitesfile)
