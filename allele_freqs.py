@@ -3,7 +3,9 @@
 '''
 Calculate allele freqs per population defined in pops and info file
 optionally restrict to transversions
-write to file "out_freqs" [chr, pos, ref, alt, freq_pop1, freq_pop2, ...]
+similar to vcf-file to also use it with d_stats.py
+header: #CHROM  POS  ID  REF  ALT  AltaiNeandertal  Mbuti ...
+write to stdout
 take vcf from stdin
 '''
 
@@ -14,7 +16,7 @@ import d_functions as D
 
 
 def main():
-	parser = argparse.ArgumentParser(description='Takes pops and pop-info from files, vcf from stdin and calculates allele freqs per population. Writes to file "out_freqs" [chr, pos, ref, alt, freq_pop1, freq_pop2, ...].', usage='zcat chr21.vcf.gz | allele_freqs.py pops -i pop-info')
+	parser = argparse.ArgumentParser(description='Takes pops and pop-info from files, vcf from stdin and calculates allele freqs per population. Writes to stdout [#CHROM, POS, ID, REF, ALT, freq_pop1, freq_pop2, ...]. Only for biallelic sites, omits sites where all freqs are in {0, None}.', usage='zcat chr21.vcf.gz | allele_freqs.py pops -i pop-info | bgzip > alle_freqs_chr21.tab.gz')
 	# mandatory
 	parser.add_argument("pops", help="File with populations like in pop-column of info-file.")
 	parser.add_argument("-i", "--info", required=True, help="mandatory: csv-file with population metadata for pops (might contain more pops). Needs columns [sample; population; sex]; with sample being identical to the name in the vcf.")
@@ -27,28 +29,22 @@ def main():
 	if sys.stdin.isatty():
 		sys.exit("Error: Needs vcf from stdin, usage: 'zcat chr21.vcf.gz | allele_freqs.py pops -i pop-info'")
 	vcf = sys.stdin
+	
 
 	########
 
 	# skip header until sample line
 	vcf_header = D.get_sample_header(vcf)
 
-	## get list of populations
-	print("Read pops file...")
+	# get list of populations
 	pops = get_pops_from_file(args.pops)
-	print(pops)
 	
 	# from info-file and vcf-header: get col-numbers for every relevant pop and sex for every col
-	print("Read info file...")
 	pop_colnums, col_gender = D.get_pop_colnumbers(args.info, vcf_header, pops)
-	for pop in pop_colnums.keys():
-		print(pop)
-		print(len(pop_colnums[pop]))
-	#print(pop_colnums)
-	#print(col_gender)
 
-	print("Compute allele freqs...")
+	# Compute allele freqs and write to stdout
 	allele_freqs(vcf, pop_colnums, pops, col_gender, args.transver)
+
 
 
 def get_pops_from_file(pop_file):
@@ -62,54 +58,38 @@ def get_pops_from_file(pop_file):
 			pops.append(pop.rstrip())
 	return pops
 
-# write "out_freqs" with [chr, pos, ref, alt, freq_pop1, freq_pop2, ...]
 # CUATION this assumes pure genotype-input
 def allele_freqs(vcf, pop_colnums, pops, col_gender, transver=False):
-	with open("out_freqs","w") as out:
-		out.write('\t'.join(["chr","pos","ref","alt"] + list(pops)) + "\n")
-		line_count = 0
-		trans_county = 0
-		nbial_county = 0
-		for line in vcf:
-			try:
-				line = line.rstrip().split()
-				## bases/genotypes
-				ref = line[3]
-				alt = line[4]
-				## reduce to biallelic 
-				if alt not in ["A","C","T","G"] or ref not in ["A","C","T","G"]:
-					#print("Skipping non-biallelic:", line[:7])
-					nbial_county += 1
+	sys.stdout.write('\t'.join(["#CHROM","POS","ID","REF","ALT"] + list(pops)) + "\n")
+	line_count = 0
+	trans_county = 0
+	nbial_county = 0
+	for line in vcf:
+		try:
+			line = line.rstrip().split()
+			## bases/genotypes
+			ref = line[3]
+			alt = line[4]
+			## reduce to biallelic 
+			if alt not in ["A","C","T","G"] or ref not in ["A","C","T","G"]:
+				continue
+			## reduce to transversions 
+			if transver: 
+				if ("A" in ref+alt and "G" in ref+alt) or ("C" in ref+alt and "T" in ref+alt):
 					continue
-				## reduce to transversions 
-				if transver: 
-					if ("A" in ref+alt and "G" in ref+alt) or ("C" in ref+alt and "T" in ref+alt):
-						#print("Skipping transition:", line[:7])
-						trans_county += 1
-						continue
-				## get alternative allele freqs for input populations
-				p = []
-				for pop in pops:    
-					p.append(D.get_p(line, pop_colnums[pop], col_gender, X=False)) # CAUTION: only for autos
-				#print(p)
-				## check that not all pop-freqs are None (no genotypes in pop)
-				pset = set(p)
-				if pset.issubset({0,None}):
-					#print("Uninformative site:", pset) 
-					continue
-				line_count += 1
-				if line_count % 50000 == 0:
-					print(line_count)
-				out.write("\t".join(line[0:2] + line[3:5]) + "\t" + "\t".join(map(str,p)) + "\n")
-			except (IndexError, ValueError) as errore:
-				print(errore)
-				print(line)
-				sys.exit()
-	
-	print("Number of skipped non-biallelic sites: %d" % nbial_county)
-	print("Number of skipped transitions: %d" % trans_county)
-	print("Number of valid lines: %d" % line_count)
-	
+			## get alternative allele freqs for input populations
+			p = []
+			for pop in pops:    
+				p.append(D.get_p(line, pop_colnums[pop], col_gender, X=False)) # CAUTION: only for autos
+			## check that not all pop-freqs are None (no genotypes in pop)
+			pset = set(p)
+			if pset.issubset({0,None}):
+				continue
+			sys.stdout.write("\t".join(line[:5]) + "\t" + "\t".join(map(str,p)) + "\n")
+		except(IndexError, ValueError) as errore:
+			sys.stderr.write(str(errore) + "\n")
+			sys.stderr.write("\t".join(line) + "\n")
+			sys.exit()
 
 if __name__ == "__main__":
 	main()
