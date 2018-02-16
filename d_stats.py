@@ -17,7 +17,7 @@ def main():
 	parser = argparse.ArgumentParser(description='Takes pop1-pop4 and pop-info from files, vcf from stdin and calculates blockwise ABBA and BABA for all combinations of pop1-pop4. Writes to file "out_blocks" containing lines with the 4 pops and ABBA, BABA for every block.', usage='zcat file.vcf.gz | d_stats.py pop1 pop2 pop3 pop4 -i pop-info -n 20 -t')
 	# mandatory
 	parser.add_argument("chrom", help="chromosome number, e.g. '21'") 
-	parser.add_argument("pop1", help="File with populations like in pop-column of info-file. Used in position one of D-stats. Or (NEW) a comma-separated string of populations - only with option -l, --poplist.")
+	parser.add_argument("pop1", help="File with populations like in pop-column of info-file. Used in position one of D-stats. Or (NEW) a comma-separated string of populations.")
 	parser.add_argument("pop2", help="Like pop1 for position two of D-stats.")
 	parser.add_argument("pop3", help="Like pop1 for position three of D-stats.")
 	parser.add_argument("pop4", help="Like pop1 for position four of D-stats.")
