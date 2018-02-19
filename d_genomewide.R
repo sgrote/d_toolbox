@@ -15,6 +15,7 @@ chroms = mixedsort(chroms)
 # initialize genomewide
 genome_blocks = data.frame()
 # go through directories
+first = TRUE
 for (i in 1:length(chroms)){
 	setwd(chroms[i])
 	print(getwd())
@@ -38,7 +39,7 @@ for (i in 1:length(chroms)){
 	write.table(out, "out_d", row.names=F, quote=F, sep="\t")	
 	# collect for genomewide
 	if (chroms[i] != "chrX"){
-		if (i==1){
+		if (first){
             if (sitesfile){
                 n_sites_genome = data.frame("chr"=i, "sites"=sites)
 			}
@@ -53,6 +54,7 @@ for (i in 1:length(chroms)){
 		}
 		out_blocks$block = out_blocks$block + last_block	
 		genome_blocks = rbind(genome_blocks, out_blocks)
+		first = FALSE
 	} else {
 		message("skipping chrX for genomewide results")
 	}	
