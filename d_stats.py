@@ -16,8 +16,6 @@ import d_functions as D
 def main():
 	parser = argparse.ArgumentParser(description='Takes pop1-pop4 and pop-info from files, vcf from stdin and calculates blockwise ABBA and BABA for all combinations of pop1-pop4. Writes to file "out_blocks" containing lines with the 4 pops and ABBA, BABA for every block.', usage='zcat file.vcf.gz | d_stats.py pop1 pop2 pop3 pop4 -i pop-info -t')
 	# mandatory
-	# TODO: combine with centro, optional argument - only needed there
-	parser.add_argument("chrom", help="chromosome number, e.g. '21'") 
 	parser.add_argument("pop1", help="File with populations like in pop-column of info-file. Used in position one of D-stats. Or (NEW) a comma-separated string of populations.")
 	parser.add_argument("pop2", help="Like pop1 for position two of D-stats.")
 	parser.add_argument("pop3", help="Like pop1 for position three of D-stats.")
@@ -28,9 +26,10 @@ def main():
 
 	# optional
 	parser.add_argument("-t", "--transver", action="store_true", help="Transversions only.")
-	parser.add_argument("-c" ,"--centro", help="optional: bed-file containing chr,start,stop for the centromere of the chromosome. If defined the centromere will be excluded.")
 	parser.add_argument("-s", "--sitesfile", choices=["sites", "full"], help="optional: if 'sites' write a 'sites'-file with [block, pos] for every informative position. If 'full' the 'sites'-file also contains all derived allele freqs at informative positions for the populations provided.")
 	parser.add_argument("-f", "--fixedpairs", action="store_true", help="Don't create all possible combinations of pop1-pop4 but just paste them (all need same length then).")
+	parser.add_argument("--centro", help="optional: bed-file containing chr,start,stop for the centromere of the chromosome, which will be excluded. Needs --chrom defined.")
+	parser.add_argument("--chrom", help="chromosome number, e.g. '21', only needed if --centro is defined")
 
 	args = parser.parse_args()
 
