@@ -17,27 +17,27 @@ import gzip
 
 
 def main():
-	parser = argparse.ArgumentParser(description="filter streamed in vcf-like file with bed-file. Write to stdout. input stream: (#header), columns: chr, pos, ... (1-based). Assumes vcf is only one chrom.", usage="zcat file.vcf.gz | filter_vcf_with_bed.py filter.bed")
-	parser.add_argument("bed_file", help="chr, pos, end (0-based, exclusive). Positions to be kept in vcf. filter.bed or filter.bed.gz")
+    parser = argparse.ArgumentParser(description="filter streamed in vcf-like file with bed-file. Write to stdout. input stream: (#header), columns: chr, pos, ... (1-based). Assumes vcf is only one chrom.", usage="zcat file.vcf.gz | filter_vcf_with_bed.py filter.bed")
+    parser.add_argument("bed_file", help="chr, pos, end (0-based, exclusive). Positions to be kept in vcf. filter.bed or filter.bed.gz")
 
-	args = parser.parse_args()
-	
-	if sys.stdin.isatty():
-		sys.exit("Error: Needs vcf from stdin, e.g. 'zcat file.vcf.gz | filter_vcf_with_bed.py filter.bed'")
-	vcf_file = sys.stdin
+    args = parser.parse_args()
+    
+    if sys.stdin.isatty():
+	    sys.exit("Error: Needs vcf from stdin, e.g. 'zcat file.vcf.gz | filter_vcf_with_bed.py filter.bed'")
+    vcf_file = sys.stdin
 
-	## print header
-	vcf = vcf_file.readline()
-	while vcf[0] == "#":
-		sys.stdout.write(vcf)
-		vcf = vcf_file.readline()
-	vcf = vcf.split()
-	
-	if args.bed_file.endswith('.gz'):
-	    opener = gzip.open
-	else:
-	    opener = open
-	with opener(args.bed_file, 'rt') as bed_f:
+    ## print header
+    vcf = vcf_file.readline()
+    while vcf[0] == "#":
+	    sys.stdout.write(vcf)
+	    vcf = vcf_file.readline()
+    vcf = vcf.split()
+    
+    if args.bed_file.endswith('.gz'):
+		opener = gzip.open
+    else:
+		opener = open
+    with opener(args.bed_file, 'rt') as bed_f:
 
 		bed = bed_f.readline().split()
 
