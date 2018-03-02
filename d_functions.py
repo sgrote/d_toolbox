@@ -99,7 +99,6 @@ def get_pw_pops(pops):
 					pw_pops[2].append(pops[2][k])
 					pw_pops[3].append(pops[3][l])
 	# remove unnecessary matches
-	#remove = [i for i in range(len(pw_pops[0])) if len(set([pw_pops[0][i],pw_pops[1][i],pw_pops[2][i]])) < 3]
 	# find indices to remove
 	remove = []
 	pairs = []
@@ -142,9 +141,21 @@ def get_unique_pops(pw_pops):
 pw_pops = [['popA', 'popB'], ['popC', 'popA'], ['popC', 'popD'], ['chimp', 'chimp']]
 get_unique_pops(pw_pops)
 '''
-	
 
-# NEW use pandas here instead of get_pop_dict(), allow multiple pops per sample
+
+def get_sample_header(vcf):
+	'''
+	in: open vcf-file
+	out: list [last header line (with sample-names)]
+	 as a side-effect the vcf's header is removed
+	'''
+	v = vcf.readline()
+	while v[:6] != "#CHROM":
+		v = vcf.readline()
+	return v.rstrip().split()
+
+
+# allow multiple pops per sample
 def get_pop_colnumbers(info_file, vcf_header, pops):
 	'''
 	in: info_file csv-file with columns [sample, pop, sex]
@@ -183,18 +194,22 @@ popcol == {'Neandertal': [9, 10], 'Denisova': [11], 'Vindija33.19': [10]}
 colsex == {9: 'female', 10: 'female', 11: 'female'}
 '''
 
-
-def get_sample_header(vcf):
+# just the colnumber of a sample (useful for preprocessed allele-freq input)
+def get_sample_colnumber(vcf_header, pops):
 	'''
-	in: open vcf-file
-	out: list [last header line (with sample-names)]
-	 as a side-effect the vcf's header is removed
+	in: vcf_header as list
+		pops as set of pops needed for D-stats
+	out: dictionary {population:colnumber}
 	'''
-	v = vcf.readline()
-	while v[:6] != "#CHROM":
-		v = vcf.readline()
-	return v.rstrip().split()
+	sample_colnum = {}
+	for p in pops:
+		sample_colnum[p] = vcf_header.index(p)
+	return sample_colnum
 
+''' test
+vcf_header = ['first_fields','Altai','Vindija','Denisova', 'Altai']
+get_sample_colnumber(vcf_header, ["Denisova", "Altai"]) == {'Denisova': 3, 'Altai': 1}
+'''
 
 
 
@@ -283,7 +298,7 @@ get_p(vcf_line1, [16,17], col_gender, True) == 0
 # one list for containig block-abba-baba-sums for altai and vindija together in one list
 # 0. blocks, 1. abba, baba, 2. pw_pops  [ [[abba][baba]] [[abba][baba]] ...]
 # CUATION this assumes pure genotype-input
-def abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, block_size, centro_range=None, transver=False, sitesfile=None):
+def abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, block_size, centro_range=None, transver=False, sitesfile=None, af_input=False):
 	pops = set(pw_pops[0]+pw_pops[1]+pw_pops[2]+pw_pops[3])
 	if sitesfile:
 		sites_file = open("sites","w")
@@ -307,6 +322,8 @@ def abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, block_size, centro_ra
 	first = True
 	for line in vcf:
 		line = line.rstrip().split()
+		# TODO: maybe require a pre-filtered file here and do all filtering in a separate script before
+		# 	    like zcat vcf | vcf_filter.py | d_stats.py 
 		# skip invariable sites
 		if line[4] == ".":
 			continue
@@ -348,12 +365,17 @@ def abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, block_size, centro_ra
 			block_count += 1
 			print("starting block ", block_count+1, "until position", block_end)
 
-		## TODO: maybe before computing p(ALT), check that not all (pop3 and pop4) or (pop1 and pop2) genotypes are the same
-		## TODO: maybe also check if in the genotypes of e.g. pops1 or pops4 any "1" or "0" is present
 		## get alternative allele freqs for input populations
 		p = {}
-		for pop in pops:    
-			p[pop] = get_p(line, pop_colnums[pop], col_gender, X)
+		## if allele-freq-input: get_p directly from file with pop_columns[pop]
+		if af_input:
+			for pop in pops:
+				af = line[pop_colnums[pop]]
+				p[pop] = None if af == "None" else float(af)
+		else:
+			for pop in pops:
+				p[pop] = get_p(line, pop_colnums[pop], col_gender, X)
+		
 		#print(p)
 		## check that not all pop-freqs are 0 or 1 and None (pop with variant might not be part of D-stats)
 		pset = set(p.values())
@@ -362,7 +384,7 @@ def abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, block_size, centro_ra
 			continue
 
 		## compute p(ABBA) and p(BABA)  
-		abba = [] # TODO: initialize with n_comp and 0 and then acces with index instead of append and just skip if None in ....
+		abba = []
 		baba = []
 		for i in range(n_comp):
 			if None in [p[pw_pops[0][i]], p[pw_pops[1][i]], p[pw_pops[2][i]], p[pw_pops[3][i]]]:

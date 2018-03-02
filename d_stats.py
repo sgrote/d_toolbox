@@ -20,14 +20,14 @@ def main():
 	parser.add_argument("pop2", help="Like pop1 for position two of D-stats.")
 	parser.add_argument("pop3", help="Like pop1 for position three of D-stats.")
 	parser.add_argument("pop4", help="Like pop1 for position four of D-stats.")
-	parser.add_argument("-i", "--info", required=True, help="mandatory: csv-file with population metadata for pop1-pop4 (might contain more pops). Needs columns [sample; population; sex]; with sample being identical to the name in the vcf.")
-	# blocksize
-	parser.add_argument("-k", "--blocksize", type=int, default=5000, help="Size of blocks in kb.")
 
 	# optional
+	parser.add_argument("-i", "--info", help="mandatory for vcf-input: csv-file with population metadata for pop1-pop4 (might contain more pops). Needs columns [sample; population; sex]; with sample being identical to the name in the vcf.")
+	parser.add_argument("-k", "--blocksize", type=int, default=5000, help="Size of blocks in kb.")
 	parser.add_argument("-t", "--transver", action="store_true", help="Transversions only.")
 	parser.add_argument("-s", "--sitesfile", choices=["sites", "full"], help="optional: if 'sites' write a 'sites'-file with [block, pos] for every informative position. If 'full' the 'sites'-file also contains all derived allele freqs at informative positions for the populations provided.")
 	parser.add_argument("-f", "--fixedpairs", action="store_true", help="Don't create all possible combinations of pop1-pop4 but just paste them (all need same length then).")
+	parser.add_argument("-a", "--afinput", action="store_true", help="Input is already vcf-like file with allele-frequencies per population.")
 	parser.add_argument("--centro", help="optional: bed-file containing chr,start,stop for the centromere of the chromosome, which will be excluded. Needs --chrom defined.")
 	parser.add_argument("--chrom", help="chromosome number, e.g. '21', only needed if --centro is defined")
 
@@ -41,7 +41,7 @@ def main():
 	########
 
 	## get centromere range
-	centro_range = D.get_range(args.chrom ,args.centro) if args.centro else None
+	centro_range = D.get_range(args.chrom, args.centro) if args.centro else None
 	#print(centro_range)
 
 	# skip header until sample line
@@ -62,13 +62,15 @@ def main():
 	## get unique pops
 	pops = D.get_unique_pops(pw_pops)
 
-	# from info-file and vcf-header: get col-numbers for every relevant pop and sex for every col
-	pop_colnums, col_gender = D.get_pop_colnumbers(args.info, vcf_header, pops)
-	#print(pop_colnums)
-	#print(col_gender)
+	# get col-numbers for every relevant pop (and sex for every col for VCF input)
+	if args.afinput:
+		pop_colnums = D.get_sample_colnumber(vcf_header, pops)
+		col_gender = None
+	else:
+		pop_colnums, col_gender = D.get_pop_colnumbers(args.info, vcf_header, pops)
 
-	# compute blockwise ABBA  [ [[abba][baba]] [[abba][baba]] ...] (NEW param-Afr fixed)
-	blocks, sites_comp = D.abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, args.blocksize, centro_range, args.transver, args.sitesfile)
+	# compute blockwise ABBA  [ [[abba][baba]] [[abba][baba]] ...]
+	blocks, sites_comp = D.abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, args.blocksize, centro_range, args.transver, args.sitesfile, args.afinput)
 
 	# rearrange output and print to file [[pop1][pop2][pop3][block][abba][baba]]
 	blocks_out = D.rearrange_blocks(pw_pops, blocks)
