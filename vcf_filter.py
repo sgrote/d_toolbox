@@ -19,6 +19,8 @@ import sys
 
 import vcf_line_filter as F
 
+# TODO: add transver option (should that include biallelelic?)
+# TODO: add biallelix SNP option
 
 def main():
 	parser = argparse.ArgumentParser(description='Filter one vcf file, from STDIN filtering for lines and individual genotypes with condition-string. Header and QUAL, FILTER, INFO are kept, FORMAT is kept or "GT" if gt_only. Writes to STDOUT.', usage='zcat file1.vcf.gz | vcf_filter.py --filter "QUAL > 3 and AC >= 10" --filter_ind "GF >= 1"')
@@ -55,6 +57,7 @@ def main():
 		## for every line: check if line passes and filter on individual genotypes
 		try:
 			# returns (modified) line if it passes filter, if not None or all ./. line (if keep_miss)
+			# TODO: this can also be used with other files, combi filter returns the same line as input if no filter strings are used, but if not keep_miss (default) and 'var' then lines will be checked for presence of ALT-allele (but the way this done (check if anything is not in the 'no gt, only ref' failset would pass, so also allele-freqs). still time could be saved with keep_miss=TRUE for allele freq input)
 			out = F.combi_filter(v, filter1=args.filter, filter_ind1=args.filter_ind, gt_only=args.gt_only, var=args.var, keep_miss=args.keep_miss)
 			if out:
 				sys.stdout.write("\t".join(out) + "\n")

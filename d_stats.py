@@ -56,8 +56,8 @@ def main():
 		pw_pops = pops
 	else:
 		pw_pops = D.get_pw_pops(pops)
-	print("pop-matches:")
-	D.print_table(pw_pops)
+	#print("pop-matches:")
+	#D.print_table(pw_pops)
 	
 	## get unique pops
 	pops = D.get_unique_pops(pw_pops)

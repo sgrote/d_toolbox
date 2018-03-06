@@ -58,7 +58,7 @@ def get_pops_from_file(pop_file):
 			pops.append(pop.rstrip())
 	return pops
 
-# CUATION this assumes pure genotype-input
+# CAUTION this assumes pure genotype-input
 def allele_freqs(vcf, pop_colnums, pops, col_gender, transver=False):
 	sys.stdout.write('\t'.join(["#CHROM","POS","ID","REF","ALT"] + list(pops)) + "\n")
 	line_count = 0
@@ -90,6 +90,8 @@ def allele_freqs(vcf, pop_colnums, pops, col_gender, transver=False):
 			sys.stderr.write(str(errore) + "\n")
 			sys.stderr.write("\t".join(line) + "\n")
 			sys.exit()
+
+
 
 if __name__ == "__main__":
 	main()

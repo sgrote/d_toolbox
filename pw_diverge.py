@@ -213,7 +213,7 @@ def pw_diverge(vcf, pop_colnums, pops, transver=False, homo=False):
 				mismatches[i] += mi
 			## line-count to screen
 			line_count += 1
-			if line_count % 100000 == 0:
+			if line_count % 1000000 == 0:
 				print(line[1])
 		except (IndexError, ValueError) as errore:
 			print(errore)
