@@ -126,6 +126,23 @@ def get_pw_pops(pops):
 	return pw_pops
 
 
+def get_pw_pops_from_file(pw_pops_file):
+	'''
+	in: csv-file with (at least) 4 columns named: pop1, pop2, pop3, pop4 defining the population matches
+	out: list [[pop1][pop2][pop3][pop4]] for all matches,
+	'''
+	pw_pops_table = pd.read_csv(pw_pops_file)
+	pop1 = list(pw_pops_table['pop1'])
+	pop2 = list(pw_pops_table['pop2'])
+	pop3 = list(pw_pops_table['pop3'])
+	pop4 = list(pw_pops_table['pop4'])
+	pw_pops = [pop1, pop2, pop3, pop4]
+	return pw_pops
+
+''' test
+get_pw_pops_from_file("/mnt/expressions/steffi/D/infofiles/capture_eval_pairings_BY.csv")
+'''
+
 def get_unique_pops(pw_pops):
 	'''
 	in: list of lists for pairwise population matches
