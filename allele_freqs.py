@@ -78,14 +78,16 @@ def allele_freqs(vcf, pop_colnums, pops, col_gender, transver=False):
 				if ("A" in ref+alt and "G" in ref+alt) or ("C" in ref+alt and "T" in ref+alt):
 					continue
 			## get alternative allele freqs for input populations
-			p = []
+			freqs = []
 			for pop in pops:    
-				p.append(D.get_p(line, pop_colnums[pop], col_gender, X=False)) # CAUTION: only for autos
+				freqs.append(D.get_p(line, pop_colnums[pop], col_gender, X=False)) # CAUTION: only for autos
 			## check that not all pop-freqs are None (no genotypes in pop)
-			pset = set(p)
+			pset = set(freqs)
 			if pset.issubset({0,None}):
 				continue
-			sys.stdout.write("\t".join(line[:5]) + "\t" + "\t".join(map(str,p)) + "\n")
+			# replace 'None' with '.'
+			freqs = ["." if p == None else p for p in freqs]
+			sys.stdout.write("\t".join(line[:5]) + "\t" + "\t".join(map(str,freqs)) + "\n")
 		except(IndexError, ValueError) as errore:
 			sys.stderr.write(str(errore) + "\n")
 			sys.stderr.write("\t".join(line) + "\n")
