@@ -42,9 +42,14 @@ def main():
 		bed = bed_f.readline().split()
 
 		## check if vcf position is in bed (bed 1-3 = vcf 2-3)
-		while not (len(vcf)==0 or len(bed)==0):
+		while not (len(vcf) == 0):
+
+			# avoid BrokenPipeError: [Errno 32] Broken pipe (when bed-file is done but instream not)
+			if len(bed) == 0:
+				vcf = vcf_file.readline().split()
+
 			# check that chrom matches:
-			if vcf[0] != bed[0]:
+			elif vcf[0] != bed[0]:
 				bed = bed_f.readline().split()
 			# A) vcf in bed
 			elif ((int(vcf[1]) > int(bed[1])) and (int(vcf[1]) <= int(bed[2]))):
@@ -57,6 +62,8 @@ def main():
 			# C) vcf larger than bed
 			elif (int(vcf[1]) > int(bed[2])):
 				bed = bed_f.readline().split()
+
+
 
 
 if __name__ == "__main__":
