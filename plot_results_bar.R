@@ -8,13 +8,13 @@ library("optparse")
  
 option_list = list(
 	make_option(c("-d", "--infile"), type="character", default="out_d", 
-		help="d-stats input"),
+		help="d-stats input \n\t\tdefault = %default"),
 	make_option(c("-o", "--outpdf"), type="character", default="D_barplot.pdf", 
-		help="output pdf file name"),
+		help="output pdf file name \n\t\tdefault = %default"),
 	make_option(c("-i", "--info"), type="character", 
 		help=".csv table with 4 columns: pop, superpop, color, order"),
 	make_option(c("-v", "--varpop"), type="integer", default=3,
-		help="{1,2,3,4} population that is variable in one plot (x-axis)"),
+		help="{1,2,3,4} population that is variable in one plot (x-axis) \n\t\tdefault = %default"),
 	make_option(c("-f", "--fixedy"), action="store_true", default=FALSE,
 		help="y-axis is fixed for whole input dataset. If not, y-axis is resized for every plot")
 )
@@ -26,7 +26,7 @@ option_list = list(
 	# BantuHerero	AFR		91		2
 	# BantuKenya	AFR		91		2
 
-opt_parser = OptionParser(option_list=option_list)
+opt_parser = OptionParser(option_list=option_list, description="\nPlot D(pop1, pop2, X, pop4) for every pop1-pop2-pop4 combi as barplot. Position X can be changes. group, order and color bars by info given in .csv file.")
 opt = parse_args(opt_parser)
 print(opt)
 
