@@ -1,7 +1,6 @@
 
 # make a heatmap for of D(X, Y , pop3, pop4) for every pop3-pop4 combinations
 
-# Plot D(pop1, pop2, X, pop4) for every pop1-pop2-pop4 combi as barplot
 
 ### command line arguments:
 # 1) infile (out_d)
@@ -10,10 +9,6 @@
 args = commandArgs(trailingOnly=TRUE)
 out_d_file = args[1]
 out_pdf = args[2]
-
-
-# TODO: instead of loop over pops check present combinations (maybe  not all pairwise are present)
-# TODO: mover other plotting scripts from ../scripts to ../old_scripts
 
 
 # plot d in heatmap given dataframe: [pop1, pop2, pop3, pop4, d, z] for one pop3
@@ -40,14 +35,12 @@ plot_d = function(dtab, sub="", dendro=FALSE){
 	# replace NA with 0 (diagonal)
 	sqd[is.na(sqd)] = 0
 	sqz[is.na(sqz)]= 0
-	# NEW: significance asterix-matrix
+	# significance asterix-matrix
 	sqa = matrix(ncol=ncol(sqz), nrow=nrow(sqz), data="", dimnames=list(rownames(sqz),colnames(sqz)))
-#	sqa[abs(sqz) > 2] = "*"
-#	sqa[abs(sqz) > 3] = "**"
 	sqa[sqz > 2] = "*"
 	sqa[sqz	 > 3] = "**"
-	# add custom breaks to allow fixed limits 
-	limit = 8 # TODO: das wird hier noch nicht gebraucht da zu niedrig ==> aber code erstmal behalten
+	# add custom breaks to allow fixed limits, usually limit is max(abs(D))
+	limit = 8
 	if (max(sqd) > limit) limit = max(sqd)
 	breakys = seq(-limit, limit, len=101)
 	# titel und so
@@ -62,8 +55,6 @@ plot_d = function(dtab, sub="", dendro=FALSE){
 		cellnote=sqa, notecol="black", notecex=1.2) # asterix
 	# legend z-score mark
 	legend("top",cex=0.7,ncol=2,legend=c("*","**","|Z| > 2","|Z| > 3"), bty="n",pt.bg=1,title="weighted block Jackknife")
-#	legend(x=0.85,y=1.1,cex=0.7,ncol=2,legend=c("*","**","|Z| > 2","|Z| > 3"), bty="n",pt.bg=1,title="weighted block Jackknife")
-	# subtitle
 	legend("topright", sub, bty="n")   	
 }
 
