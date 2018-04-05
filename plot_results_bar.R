@@ -26,7 +26,7 @@ option_list = list(
 	# BantuHerero	AFR		91		2
 	# BantuKenya	AFR		91		2
 
-opt_parser = OptionParser(option_list=option_list, description="\nPlot D(pop1, pop2, X, pop4) for every pop1-pop2-pop4 combi as barplot. Position X can be changes. group, order and color bars by info given in .csv file.")
+opt_parser = OptionParser(option_list=option_list, description="\nPlot D(pop1, pop2, X, pop4) for every pop1-pop2-pop4 combi as barplot. Position X can be changed. group, order and color bars by info given in .csv file.")
 opt = parse_args(opt_parser)
 print(opt)
 
@@ -110,7 +110,6 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 	barplot(input$d, col="white", border="white", ylim=c(ymin,ymax), width=0.8, space=spaces, xaxt="n", yaxt="n", xlab="")
 	
 	# horizontal lines
-#	grid (NA, NULL, col="lightblue", lty=1) # NA: no lines on x-axis, NULL: autom lines at tick-marks on y
 	yaxp = par("yaxp")
 	hlines = seq(yaxp[1], yaxp[2], (yaxp[2]-yaxp[1])/yaxp[3])
 	abline(h=hlines[-length(hlines)], col="lightblue", lty=1) # omit top line
@@ -135,9 +134,6 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 	
 	# subtitle
 	mtext(subtitel, line=-1, adj=0.5, cex=mcex) 
-#	# label on y-axis ends # TODO: not applicable anymore now that also pop1 or pop2 could be X-axis
-#	mtext(substring(pop1,1,3), side=3, adj=-0.03, cex=mcex)
-#	mtext(substring(pop2,1,3), side=1, adj=-0.03, cex=mcex)
 
 	# legend Z-scores
 	legend("topleft",cex=legcex,ncol=2,legend=c("*", "**", "|Z| > 2","|Z| > 3"),bty="n",title="weighted block Jackknife")
