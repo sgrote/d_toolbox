@@ -42,7 +42,7 @@ def get_pops_from_args(apop1, apop2, apop3, apop4):
 	out: list [[pop1][pop2][pop3][pop4]] for single populations per 'column'
 	'''
 	if os.path.isfile(apop1): 
-		print("Looks like pop-files")
+		print("Looks like pop-files.")
 		return(get_pops_from_files(apop1, apop2, apop3, apop4))
 	else:
 		print("Looks like pop-lists.")
@@ -70,7 +70,7 @@ def get_pops_from_files(pop1, pop2, pop3, pop4):
 
 def check_pw_pops(pops):
 	'''
-	check that pops [[pop1][pop2][pop3][pop4]] have same length length
+	check that pops [[pop1][pop2][pop3][pop4]] have same length
 	'''
 	l = len(pops[0])
 	if any([len(pops[i]) != l for i in range(1,4)]):
