@@ -170,7 +170,7 @@ pdf(opt$outpdf, width=13)
 		sw = FALSE  # don't switch pop1 and pop2 for overall negative D (fixed ylim not appropriate for that)
 	} else {
 		ymin = NULL
-		yamx = NULL
+		ymax = NULL
 		sw = TRUE
 	}
 	for (i in 1:length(combis)){
