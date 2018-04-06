@@ -34,6 +34,9 @@ if (! opt$varpop %in% 1:4){
 	stop("argument 4 must be 1,2,3 or 4")
 }
 
+if (is.null(opt$info)){
+	stop("Missing info-file -i/--info")
+}
 
 #### helper
 
