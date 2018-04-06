@@ -24,7 +24,7 @@ option_list = list(
 opt_parser = OptionParser(option_list=option_list, description="\ncompute D(pop1, pop2, pop3, pop4) per derived freq-bin in pop3 (by pop1 or pop2 makes no sense)
 needs 'out_d' and a full 'sites' file (run d_stats.py with --sites 'full' and d_genomewide.R before)
 population-matches are retrieved from out_d, can also take another file which might be a subset of pop-matches
-output: abba, baba, n_sites, d per pop-match and freq-bin (bin = mean of upper and lower bin-limit, bin=1 -> fixed)")
+output: abba, baba, n_sites, d per pop-match and freq-bin (bin = mean of upper (exclusive) and lower (inclusive) bin-limit, bin=1 -> fixed)")
 opt = parse_args(opt_parser)
 print(opt)
 
@@ -47,8 +47,9 @@ initialize = function(pop_match, bins){
 
 # create bins
 bin_borders = seq(0, 1, length.out=opt$bins+1)
+bin_width = bin_borders[2] - bin_borders[1]
 # means of bin-borderes + fixed
-bins = rowMeans(cbind(c(bin_borders[-1],1), bin_borders))
+bins = c(bin_borders[bin_borders != 1] + (bin_width/2), 1)
 
 # read out_d
 if (! opt$infile %in% dir()){
@@ -109,12 +110,8 @@ for (i in 1:length(chroms)){
 			p_baba = p_ba[!b0] * freqs[!b0,pop3]
 			inform_site = (p_abba != 0 | p_baba != 0) * 1
 			# get freq bins, bin = mean of borders (1 only for fixed)
-			freqbins = freqs[!b0,pop3]
-			freqbins[freqbins == 1] = 2
-			for (k in 1:(opt$bins)){
-				freqbins[freqbins > bin_borders[k] & freqbins <= bin_borders[k+1]] = bins[k]
-			}
-			freqbins[freqbins == 2] = 1
+			freqbins = floor(freqs[!b0,pop3]*opt$bins) / opt$bins
+			freqbins[freqbins != 1] = freqbins[freqbins != 1] + (bin_width/2)
 			# ABBA/BABA per bin
 			f_abba = tapply(p_abba, freqbins, sum)
 			f_baba = tapply(p_baba, freqbins, sum)
