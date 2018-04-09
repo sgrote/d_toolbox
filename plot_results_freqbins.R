@@ -41,7 +41,7 @@ if (is.null(opt$info)){
 #### helper
 
 # plot D(pop1, pop2, X, pop4) per freqbin
-plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=0.8, auto_switch=TRUE){
+plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL , auto_switch=TRUE){
 	
 	# switch pop1-pop2 if median D is negative
 	if (auto_switch && (median(input$d) < 0)){
@@ -51,9 +51,10 @@ plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex
 
 	# titel
 	titel = paste0("D(",unique(input$pop1),", ",unique(input$pop2),", X, ",unique(input$pop4),")")
-	subtitel = paste0(min(input$n_sites)," - ", max(input$n_sites), " informative sites")
+#	subtitel = paste0(min(input$n_sites)," - ", max(input$n_sites), " informative sites")
 	ylab="D[%]"
-	xlab="Derived allele frequency in X"
+#	xlab="Derived allele frequency in X"
+	xlab=""
 
 	# merge with superpop-info and define spaces between bars
 	plot_pops = unique(input$pop3)
@@ -61,15 +62,17 @@ plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex
 
 	# empty plot
 	# TODO: make xlim parameter for zoom-ins
-	plot(input$bin, input$d, type="n", xlim=c(0,1.05), ylim=c(ymin,ymax), main=titel, ylab=ylab, xlab=xlab)  
+	plot(input$bin, input$d, type="n", xlim=c(0,1.05), ylim=c(ymin,ymax), ylab=ylab, xlab=xlab)  
 	# add grid lines
 	abline(h=0, col="lightblue")
 	for (k in seq(0.01, 0.05, 0.01)){
 		abline(v=k, col="lightgray")
 	}
+	# titel
+	mtext(titel, line=2, adj=0.5, cex=par()$cex.main, font=2)
+#	mtext(subtitel, line=-2, adj=0.5, cex=par()$cex.lab) 
 	# legend
-	legend("topright", legend=plot_pops, lty=1, col=plot_cols, bty="n")
-	mtext(subtitel, line=-2, adj=0.5, cex=mcex) 
+	legend("topright", legend=plot_pops, lty=1, col=plot_cols, bty="n", cex=1.2, lwd=3)
 	# add points/lines for each pop3
 	for (j in 1:length(plot_pops)){
 		one3 = input[input$pop3 == plot_pops[j],]
@@ -82,6 +85,24 @@ plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex
 	}
 }
 
+# plot range of # of informative sites for each freqbin
+plot_n_sites = function(input){
+	xlab="Derived allele frequency in X"
+	ylab="# ABBA/BABA sites"
+	subtitel = paste0(min(input$n_sites)," - ", max(input$n_sites), " informative sites")
+	
+	mean_sites = tapply(input$n_sites, input$bin, mean) 
+	min_sites = tapply(input$n_sites, input$bin, min) 
+	max_sites = tapply(input$n_sites, input$bin, max)
+	x = as.numeric(names(min_sites)) # TODO: make xlim parameter for zoom-ins
+	plot(x, mean_sites, type="h", lwd=4, col="steelblue", ylim=c(0, max(max_sites)), xlim=c(0,1.05)
+		, xlab="", ylab=ylab)
+	segments(x0=x, y0=min_sites, y1=max_sites)
+	
+	mtext(xlab, side=1, line=3.5, adj=0.5, cex=par()$cex.lab-0.2)
+	mtext(subtitel, line=-2, adj=0.5, cex=par()$cex.sub-0.2)
+	
+}
 
 
 #### main
@@ -101,8 +122,9 @@ if (opt$singlepop){
 }
 
 ## plot page per pop-combi
-pdf(opt$outpdf, width=13)
-	par(cex.main=1.1, cex.lab=1, oma=c(1,0,0,0))
+pdf(opt$outpdf, width=11, height=8)
+	par(cex.main=1.2, cex.lab=1.2, oma=c(5,1.5,4,1), mar=c(1,4,2,2))
+	layout(matrix(c(1,1,2),3,1))
 	if (opt$fixedy){
 		# compute y-axis range for plot_d_freqs (in %)
 		ymin = min(0, min(d_freqs$d)) * 1.1
@@ -117,6 +139,7 @@ pdf(opt$outpdf, width=13)
 	for (pp in unique(d_freqs$paste_pop)){
 		page_data = d_freqs[d_freqs$paste_pop == pp,]
 		plot_d_freqs(page_data, superpops, ymin=ymin, ymax=ymax, auto_switch=sw)
+		plot_n_sites(page_data)
 	}
 dev.off()
 
