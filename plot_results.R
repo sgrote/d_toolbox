@@ -1,14 +1,19 @@
+#!/usr/bin/env Rscript
 
-# make a heatmap for of D(X, Y , pop3, pop4) for every pop3-pop4 combinations
+# make a heatmap of D(X, Y, pop3, pop4) for every pop3-pop4 combination
 
+library(optparse)
 
-### command line arguments:
-# 1) infile (out_d)
-# 2) outfile.pdf
+option_list = list(
+	make_option(c("-d", "--infile"), type="character", default="out_d",
+		help="d-stats input \n\t\tdefault = %default"),
+	make_option(c("-o", "--outpdf"), type="character", default="D_heatmaps.pdf",
+		help="output pdf file name \n\t\tdefault = %default")
+)
 
-args = commandArgs(trailingOnly=TRUE)
-out_d_file = args[1]
-out_pdf = args[2]
+opt_parser = OptionParser(option_list=option_list, description="\nmake a heatmap of D(X, Y, pop3, pop4) for every pop3-pop4 combination.")
+opt = parse_args(opt_parser)
+print(opt)
 
 
 # plot d in heatmap given dataframe: [pop1, pop2, pop3, pop4, d, z] for one pop3
@@ -61,10 +66,10 @@ plot_d = function(dtab, sub="", dendro=FALSE){
 
 
 ######################################
-out_d = read.table(out_d_file, as.is=T, header=T)
+out_d = read.table(opt$infile, as.is=T, header=T)
 
 ## plot genomewide results
-pdf(out_pdf)
+pdf(opt$outpdf)
 	par(cex.main=0.8, oma=c(1,0,0,1.5), cex.lab=1)
 	combis = unique(out_d[,c("pop3", "pop4")])
 	for (i in 1:nrow(combis)){
