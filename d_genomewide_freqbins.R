@@ -5,9 +5,6 @@
 # population-matches are retrieved from out_d, can also take another file which might be a subset pop-matches
 # output: abba,baba,n_sites,d per pop-match and freq-bin (bin = mean of upper and lower bin-limit, bin=1 -> fixed)
 
-
-setwd("/mnt/scratch/steffi/D/Chagyrskaya/D_high_high_g1000Super_chimp")
-
 library(optparse)
 library(readr)
 library(gtools)
@@ -87,6 +84,8 @@ for (i in 1:length(chroms)){
 	    setwd("../")
 	    next
 	}
+	# convert to numeric (None -> NA)
+	sites[,5:ncol(sites)] = suppressWarnings(sapply(sites[,5:ncol(sites)], as.numeric))
 	## loop over pop1-pop2-pop4 population
 	for (fp in fixed_pops){
 		one124 = out_d[out_d$fixed_pop == fp,]
@@ -95,6 +94,8 @@ for (i in 1:length(chroms)){
 		pop4 = one124[1,4]
 		# reduce outgroup to {0,1}
 		freqs = sites[sites[,pop4] %in% c(0,1),]
+		# remove NA in pop1/pop2
+		freqs = freqs[! (is.na(freqs[,pop1]) | is.na(freqs[,pop2])),]
 		# convert to derived allele freq (based on pop4)
 		freqs[freqs[,pop4]==1, 5:ncol(freqs)] = 1-freqs[freqs[,pop4]==1, 5:ncol(freqs)]
 		# compute p(AB_A) and p(BA_A) per sites
@@ -104,8 +105,8 @@ for (i in 1:length(chroms)){
 		for (j in 1:nrow(one124)){
 			pop3 = one124[j,"pop3"]
 			pp = one124[j,"paste_pops"]
-			# remove pop3 fixed A
-			b0 = freqs[,pop3]==0 
+			# remove pop3 fixed A or NA)
+			b0 = freqs[,pop3] %in% c(0,NA)
 			p_abba = p_ab[!b0] * freqs[!b0,pop3]
 			p_baba = p_ba[!b0] * freqs[!b0,pop3]
 			inform_site = (p_abba != 0 | p_baba != 0) * 1
