@@ -52,9 +52,15 @@ plot_d = function(dtab, sub="", dendro=FALSE){
 	titel = paste("D(Row, Col, ", dtab[1,3],", ",dtab[1,4],")", sep="")
 	cexRow = (0.2 + 1/log10(nrow(sqd))) * 0.7
 	dtype = ifelse(dendro, "row", "none") # row and column dendrogramm are symmetric
+	# margin (for few rows the font gets bigger and margin is too small)
+	if (length(pops) < 7){
+		marge = c(8,8)
+	} else {
+		marge = c(6,6)
+	}
 	gplots::heatmap.2(sqd, main=titel,
 		scale="none", density.info="none", trace="none",
-		cexRow=cexRow, cexCol=cexRow, keysize=1.2, margins=c(6,6),
+		cexRow=cexRow, cexCol=cexRow, keysize=1.2, margins=marge,
 		breaks=breakys, col=heat.colors(100), symkey=F,
 		dendrogram=dtype, Rowv=dendro, Colv=dendro,		 
 		cellnote=sqa, notecol="black", notecex=1.2) # asterix
