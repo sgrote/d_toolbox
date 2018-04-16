@@ -260,6 +260,7 @@ def get_p(vcf_line, pop, col_gender, X=False):
 		gt = genotypes[i]
 		# NEW: handle male chrom X with two alleles (recombining part of XY) like autosome
 		# (although unclear for SGDP!! - this works for 100 genoems)
+		# TODOO: finally count alleles for every chrom; split by "/|" and done; remove all X-chrom params
 		if X and col_gender[pop[i]]=="male" and not len(gt) == 3:
 			# haploid genotype like in 1000 genomes
 			if gt == "1":
@@ -388,7 +389,7 @@ def abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, block_size, centro_ra
 		if af_input:
 			for pop in pops:
 				af = line[pop_colnums[pop]]
-				p[pop] = None if af == "None" else float(af)
+				p[pop] = None if af in ["None", "."] else float(af)
 		else:
 			for pop in pops:
 				p[pop] = get_p(line, pop_colnums[pop], col_gender, X)
