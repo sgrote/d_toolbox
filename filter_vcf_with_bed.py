@@ -18,7 +18,8 @@ import gzip
 
 def main():
 	parser = argparse.ArgumentParser(description="filter streamed in vcf-like file with bed-file. Write to stdout. input stream: (#header), columns: chr, pos, ... (1-based). Assumes vcf is only one chrom.", usage="zcat file.vcf.gz | filter_vcf_with_bed.py filter.bed")
-	parser.add_argument("bed_file", help="chr, pos, end (0-based, exclusive). Positions to be kept in vcf. filter.bed or filter.bed.gz")
+	parser.add_argument("bed_file", help="chr, pos, end (0-based, exclusive). Positions to be kept in vcf, or to be removed with option --remove. *.bed or *.bed.gz")
+	parser.add_argument("-r", "--remove", action="store_true", help="Positions in bed-files are removed and not kept.")
 
 	args = parser.parse_args()
 	
@@ -53,13 +54,16 @@ def main():
 				bed = bed_f.readline().split()
 			# A) vcf in bed
 			elif ((int(vcf[1]) > int(bed[1])) and (int(vcf[1]) <= int(bed[2]))):
-				sys.stdout.write("\t".join(vcf) + "\n")
+				if not args.remove:
+					sys.stdout.write("\t".join(vcf) + "\n")
 				vcf = vcf_file.readline().split()
-			# B) vcf smaller than bed
+			# B) vcf smaller than bed  ->  not in bed
 			elif (int(vcf[1]) <= int(bed[1])):
+				if args.remove:
+					sys.stdout.write("\t".join(vcf) + "\n")
 				#print("filtered out:" + "\t".join(vcf[:5]))
 				vcf = vcf_file.readline().split()
-			# C) vcf larger than bed
+			# C) vcf larger than bed  ->  skip bed lines until A) or B)
 			elif (int(vcf[1]) > int(bed[2])):
 				bed = bed_f.readline().split()
 
