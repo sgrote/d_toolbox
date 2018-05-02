@@ -68,12 +68,11 @@ def main():
 	# get col-numbers for every relevant pop (and sex for every col for VCF input)
 	if args.afinput:
 		pop_colnums = D.get_sample_colnumber(vcf_header, pops)
-		col_gender = None
 	else:
 		pop_colnums, col_gender = D.get_pop_colnumbers(args.info, vcf_header, pops)
 
 	# compute blockwise ABBA  [ [[abba][baba]] [[abba][baba]] ...]
-	blocks, sites_comp = D.abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, args.blocksize, centro_range, args.transver, args.sitesfile, args.afinput)
+	blocks, sites_comp = D.abba_block_sums(vcf, pop_colnums, pw_pops, args.blocksize, centro_range, args.transver, args.sitesfile, args.afinput)
 
 	# rearrange output and print to file [[pop1][pop2][pop3][block][abba][baba]]
 	blocks_out = D.rearrange_blocks(pw_pops, blocks)

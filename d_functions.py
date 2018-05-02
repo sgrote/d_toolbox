@@ -231,58 +231,46 @@ get_sample_colnumber(vcf_header, ["Denisova", "Altai"]) == {'Denisova': 3, 'Alta
 
 
 # TODO: SGDP male X-genotypes: {'0/1': 84318, '1/1': 4259919, './.': 2997653, '0/0': 25124854}
-#       how to distinguish between haploid and homozygous diploid/pseudorecombining (ask Cee?)
+#       how to distinguish between recombining and non-recombining (ask Cee?)
 #       1000 genomes has {'1': 116179771, '0': 3914561345, '1|0': 3093771, '0|1': 3151250,
 #       '1|1':      3558260, '0|0': 122262116}
 
-def get_p(vcf_line, pop, col_gender, X=False):
+def get_p(vcf_line, pop):
 	'''
 	alternative allele-freqs for one population for one biallelic site
 	in: vcf = vcf-line as list
 		pop = [colnumbers] for the population
-		col_gender = dictionary {colnumber:sex}
-		X = T/F if its X-chrom
 	out: ALT-allele-freq
 	'''
 	
 	ac = 0
 	sum_alleles = 0
 	
-	## NEW: pre-check for all-REF or all missing
+	## pre-check for all-REF or all missing
 	genotypes = [vcf_line[colnumber] for colnumber in pop]
-	if all([g in ["0/0", "0|0"] for g in genotypes]):
+	if all([g in ["0/0", "0|0", "0"] for g in genotypes]):
 		return 0.0
-	if all([g in ["./.", ".|."] for g in genotypes]):
+	if all([g in ["./.", ".|.", "."] for g in genotypes]):
 		return None
 	
 	# count alternative alleles and total number of alleles for one population  
 	for i in range(len(pop)):
 		gt = genotypes[i]
-		# NEW: handle male chrom X with two alleles (recombining part of XY) like autosome
-		# (although unclear for SGDP!! - this works for 100 genoems)
-		# TODOO: finally count alleles for every chrom; split by "/|" and done; remove all X-chrom params
-		if X and col_gender[pop[i]]=="male" and not len(gt) == 3:
-			# haploid genotype like in 1000 genomes
-			if gt == "1":
+		gt = gt.replace('/', '|')
+		alleles = gt.split("|")
+		for a in alleles:
+			if a == "1":
 				ac += 1
 				sum_alleles += 1
-			elif gt == "0":
+			elif a == "0":
 				sum_alleles += 1
-		# diploid
-		else:
-			# alternative alleles
-			if gt in {"1|1", "1/1"}:
-				ac += 2
-			elif "1" in gt:
-				ac += 1
-			# all alleles
-			if "." not in gt:
-				sum_alleles += 2
-			elif gt not in {".|.", "./."}:
-				sum_alleles += 1
+			elif a != ".":
+				sys.stderr.write("unexpected genotype\n")
+				sys.stderr.write(" ".join(["genotype:", gt, ", allele:", a]) + "\n")
+				sys.exit()
+	
 	# compute frequency 
 	if sum_alleles == 0:
-		#print("This Pop has no genotypes:", pop)
 		return None   # unknown sites may be fully genotyped invariable sites, here there is simply no GT 
 	else: 
 		daf = ac*1.0 / sum_alleles
@@ -291,23 +279,21 @@ def get_p(vcf_line, pop, col_gender, X=False):
 ''' test
 vcf_line1 = ['21','148','.','C','T','0','.','.','GT','0/1','1/1','./0','./.','1|.','1|1','.|.','0/0','0|0']
 vcf_line2 = ['X','148','.','C','T','0','.','.','GT','1/1','1','./0','./.','1|.','1/0','.','0/.','0|0']
-col_gender = {9:"male", 10:"male", 11:"female", 12:"female", 13:"male", 14:"female", 15:"male", 16:"female", 17:"male"}
 
-get_p(vcf_line1, [9,10], col_gender) == 0.75
-get_p(vcf_line1, [9,10,11], col_gender) == 3.0/5
-get_p(vcf_line1, [9,10,11,14,15], col_gender) == 5.0/7
-get_p(vcf_line1, [12,13,14,15], col_gender) == 1
-get_p(vcf_line2, [9,10], col_gender, True) == 1
-get_p(vcf_line2, [9,11], col_gender, True) == 2.0/3   # NEW count male X as diploid if e.g. 1/1
-get_p(vcf_line2, [9,14], col_gender, True) == 0.75
-get_p(vcf_line2, [10,14], col_gender, True) == 2.0/3  # but still count as haploid for "1" or "0"
-get_p(vcf_line2, [9,10,11], col_gender, True) == 0.75
-get_p(vcf_line2, [9,10,11,12], col_gender, True) == 0.75
-get_p(vcf_line2, [9,10,11,12,13], col_gender, True) == 0.8
-get_p(vcf_line1, [12,15], col_gender, True) == None
-get_p(vcf_line2, [12,15], col_gender, True) == None
-get_p(vcf_line2, [16,17], col_gender, True) == 0
-get_p(vcf_line1, [16,17], col_gender, True) == 0
+get_p(vcf_line1, [9,10]) == 0.75
+get_p(vcf_line1, [9,10,11]) == 3.0/5
+get_p(vcf_line1, [9,10,11,14,15]) == 5.0/7
+get_p(vcf_line1, [12,13,14,15]) == 1
+get_p(vcf_line2, [9,10]) == 1
+get_p(vcf_line2, [9,11]) == 2.0/3
+get_p(vcf_line2, [9,14]) == 0.75
+get_p(vcf_line2, [10,14]) == 2.0/3
+get_p(vcf_line2, [9,10,11,12]) == 0.75
+get_p(vcf_line2, [9,10,11,12,13]) == 0.8
+get_p(vcf_line1, [12,15]) == None
+get_p(vcf_line2, [12,15]) == None
+get_p(vcf_line2, [16,17]) == 0
+get_p(vcf_line1, [16,17]) == 0
 
 '''
 
@@ -316,7 +302,7 @@ get_p(vcf_line1, [16,17], col_gender, True) == 0
 # one list for containig block-abba-baba-sums for altai and vindija together in one list
 # 0. blocks, 1. abba, baba, 2. pw_pops  [ [[abba][baba]] [[abba][baba]] ...]
 # CUATION this assumes pure genotype-input
-def abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, block_size, centro_range=None, transver=False, sitesfile=None, af_input=False):
+def abba_block_sums(vcf, pop_colnums, pw_pops, block_size, centro_range=None, transver=False, sitesfile=None, af_input=False):
 	pops = set(pw_pops[0]+pw_pops[1]+pw_pops[2]+pw_pops[3])
 	if sitesfile:
 		sites_file = open("sites","w")
@@ -345,11 +331,9 @@ def abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, block_size, centro_ra
 		# skip invariable sites
 		if line[4] == ".":
 			continue
-		# get first pos for block-border and check if it's chrX
-		# TODO: also try to change this to not do the check for every line
+		# get first pos for block-border
 		if first:
 			block_end = int(line[1]) + block_size
-			X = True if line[0]=="X" else False
 			print("starting block 1 until position", block_end)
 			first = False
 		# exclude centromere (usually not needed because of manifesto)
@@ -392,7 +376,7 @@ def abba_block_sums(vcf, pop_colnums, pw_pops, col_gender, block_size, centro_ra
 				p[pop] = None if af in ["None", "."] else float(af)
 		else:
 			for pop in pops:
-				p[pop] = get_p(line, pop_colnums[pop], col_gender, X)
+				p[pop] = get_p(line, pop_colnums[pop])
 		
 		#print(p)
 		## check that not all pop-freqs are 0 or 1 and None (pop with variant might not be part of D-stats)

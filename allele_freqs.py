@@ -43,7 +43,7 @@ def main():
 	pop_colnums, col_gender = D.get_pop_colnumbers(args.info, vcf_header, pops)
 
 	# Compute allele freqs and write to stdout
-	allele_freqs(vcf, pop_colnums, pops, col_gender, args.transver)
+	allele_freqs(vcf, pop_colnums, pops, args.transver)
 
 
 
@@ -59,7 +59,7 @@ def get_pops_from_file(pop_file):
 	return pops
 
 # CAUTION this assumes pure genotype-input
-def allele_freqs(vcf, pop_colnums, pops, col_gender, transver=False):
+def allele_freqs(vcf, pop_colnums, pops, transver=False):
 	sys.stdout.write('\t'.join(["#CHROM","POS","ID","REF","ALT"] + list(pops)) + "\n")
 	line_count = 0
 	trans_county = 0
@@ -80,7 +80,7 @@ def allele_freqs(vcf, pop_colnums, pops, col_gender, transver=False):
 			## get alternative allele freqs for input populations
 			freqs = []
 			for pop in pops:    
-				freqs.append(D.get_p(line, pop_colnums[pop], col_gender, X=False)) # CAUTION: only for autos
+				freqs.append(D.get_p(line, pop_colnums[pop]))
 			## check that not all pop-freqs are None (no genotypes in pop)
 			pset = set(freqs)
 			if pset.issubset({0,None}):
