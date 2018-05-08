@@ -32,6 +32,9 @@ def main():
 	parser.add_argument("-a", "--afinput", action="store_true", help="Input is already vcf-like file with allele-frequencies per population.")
 	parser.add_argument("--centro", help="optional: bed-file containing chr,start,stop for the centromere of the chromosome, which will be excluded. Needs --chrom defined.")
 	parser.add_argument("--chrom", help="chromosome number, e.g. '21', only needed if --centro is defined")
+	parser.add_argument("--min_p3", type=float, default=0, help="Minimum B-allele frequency in pop3. Only if outgroup is fixed (A).")
+	parser.add_argument("--max_p3", type=float, default=1, help="Maximum B-allele frequency in pop3. Only if outgroup is fixed (A).")
+
 
 	args = parser.parse_args()
 
@@ -72,7 +75,7 @@ def main():
 		pop_colnums, col_gender = D.get_pop_colnumbers(args.info, vcf_header, pops)
 
 	# compute blockwise ABBA  [ [[abba][baba]] [[abba][baba]] ...]
-	blocks, sites_comp = D.abba_block_sums(vcf, pop_colnums, pw_pops, args.blocksize, centro_range, args.transver, args.sitesfile, args.afinput)
+	blocks, sites_comp = D.abba_block_sums(vcf, pop_colnums, pw_pops, args.blocksize, centro_range, args.transver, args.sitesfile, args.afinput, args.min_p3, args.max_p3)
 
 	# rearrange output and print to file [[pop1][pop2][pop3][block][abba][baba]]
 	blocks_out = D.rearrange_blocks(pw_pops, blocks)

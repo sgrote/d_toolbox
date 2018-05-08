@@ -302,7 +302,7 @@ get_p(vcf_line1, [16,17]) == 0
 # one list for containig block-abba-baba-sums for altai and vindija together in one list
 # 0. blocks, 1. abba, baba, 2. pw_pops  [ [[abba][baba]] [[abba][baba]] ...]
 # CUATION this assumes pure genotype-input
-def abba_block_sums(vcf, pop_colnums, pw_pops, block_size, centro_range=None, transver=False, sitesfile=None, af_input=False):
+def abba_block_sums(vcf, pop_colnums, pw_pops, block_size, centro_range=None, transver=False, sitesfile=None, af_input=False, min_p3=0, max_p3=1):
 	pops = set(pw_pops[0]+pw_pops[1]+pw_pops[2]+pw_pops[3])
 	if sitesfile:
 		sites_file = open("sites","w")
@@ -389,23 +389,39 @@ def abba_block_sums(vcf, pop_colnums, pw_pops, block_size, centro_range=None, tr
 		abba = []
 		baba = []
 		for i in range(n_comp):
-			if None in [p[pw_pops[0][i]], p[pw_pops[1][i]], p[pw_pops[2][i]], p[pw_pops[3][i]]]:
+			p1 = p[pw_pops[0][i]]
+			p2 = p[pw_pops[1][i]]
+			p3 = p[pw_pops[2][i]]
+			p4 = p[pw_pops[3][i]]
+			# check if valid, else append 0
+			if None in [p1, p2, p3, p4]:
 				abba.append(0)
 				baba.append(0)
-			else:
-				p1 = p[pw_pops[0][i]]
-				p2 = p[pw_pops[1][i]]
-				p3 = p[pw_pops[2][i]]
-				p4 = p[pw_pops[3][i]]
-				p_abba = (p1*(1-p2)*(1-p3)*p4) + ((1-p1)*p2*p3*(1-p4))
-				p_baba = ((1-p1)*p2*(1-p3)*p4) + (p1*(1-p2)*p3*(1-p4))
-				abba.append(p_abba)
-				baba.append(p_baba)
-				# add to sites-count-per pw_pop if informative
-				if p_abba > 0 or p_baba > 0:
-					#print(i)
-					#print(sites_comp)
-					sites_comp[i] += 1
+				continue
+			if min_p3 != 0 or max_p3 != 1:
+				# convert from ALT-freq to derived B-freq given outgroup
+				if p4 == 0:
+					p3_derived = p3
+				elif p4 == 1:
+					p3_derived = 1 - p3 
+				else:
+					print(line)
+					print("p(",pw_pops[3][i],") = ", p4)
+					sys.exit("outgroup pop4 has to be fixed to restrict on derived allele freq in pop3 (to infer the derived state).")
+				if p3_derived < min_p3 or p3_derived > max_p3:
+					abba.append(0)
+					baba.append(0)
+					continue
+			# if valid compute ABBA, BABA
+			p_abba = (p1*(1-p2)*(1-p3)*p4) + ((1-p1)*p2*p3*(1-p4))
+			p_baba = ((1-p1)*p2*(1-p3)*p4) + (p1*(1-p2)*p3*(1-p4))
+			abba.append(p_abba)
+			baba.append(p_baba)
+			# add to sites-count-per pw_pop if informative
+			if p_abba > 0 or p_baba > 0:
+				#print(i)
+				#print(sites_comp)
+				sites_comp[i] += 1
 		# check that not all is 0
 		if sum(abba)==0 and sum(baba)==0:
 			#print("uninformative site", line)
