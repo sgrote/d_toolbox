@@ -140,5 +140,8 @@ row.names(out) = NULL
 ## compute D per freq and pop-match
 out$d = (out$baba - out$abba)/(out$baba + out$abba)
 
+## account for ABBA+BABA = 0
+out$d[is.na(out$d)] = 0
+
 ## save
 write.table(out, opt$outfile, quote=F, row.names=F, sep="\t")
