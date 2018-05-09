@@ -129,10 +129,10 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 	posi = input[input$d >= 0,]
 	nega = input[input$d < 0,]
 	if(nrow(posi) > 0){
-		text(x=posi$bars, y=posi$d+posi$se, labels=posi$asterix, pos=3, offset=0, cex=0.5)
+		text(x=posi$bars, y=posi$d+posi$se, labels=posi$asterix, pos=3, offset=0, cex=cexnames)
 	}
 	if(nrow(nega) > 0){
-		text(x=nega$bars, y=nega$d-nega$se, labels=nega$asterix, pos=1, cex=0.5)		
+		text(x=nega$bars, y=nega$d-nega$se, labels=nega$asterix, pos=1, cex=cexnames)		
 	}
 	
 	# subtitle
