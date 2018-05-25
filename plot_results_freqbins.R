@@ -15,12 +15,14 @@ option_list = list(
 		help=".csv table with 4 columns: pop, superpop, color, order"),
 	make_option(c("-f", "--fixedy"), action="store_true", default=FALSE,
 		help="y-axis is fixed for whole input dataset. If not, y-axis is resized for every plot"),
-	make_option(c("-s", "--singlepop"), action="store_true", default=FALSE,
+	make_option(c("-u", "--unipop"), action="store_true", default=FALSE,
 		help="Generate one plot per pop3. By default all pop3 for one pop1-pop2-pop4 combi are plotted together."),
 	make_option(c("-a", "--autoswitch"), action="store_true", default=FALSE,
 		help="If median D < 0, pop1 and pop2 get switched to always have overall positive values."),
 	make_option(c("-l", "--lines"), action="store_true", default=FALSE,
-		help="Draw lines instead of dots.")
+		help="Draw lines between dots."),
+	make_option(c("-s", "--smooth"), action="store_true", default=FALSE,
+		help="Draw loess curves.")
 )
 
 # -i, --info) .csv table with 4 columns like (superpops): 
@@ -72,12 +74,15 @@ plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL){
 	# add points/lines for each pop3
 	for (j in 1:length(plot_pops)){
 		one3 = input[input$pop3 == plot_pops[j],]
-		if(opt$lines){
-			lines(one3$bin, one3$d, col=plot_cols[j])
-			points(one3$bin, one3$d, col=plot_cols[j], cex=0.5)
-		} else {
-			points(one3$bin, one3$d, col=plot_cols[j], cex=0.7)
+		if (opt$lines){
+			if (opt$smooth){
+				loe = loess(one3$d ~ one3$bin)
+				lines(one3$bin, predict(loe), col=plot_cols[j])
+			} else {
+				lines(one3$bin, one3$d, col=plot_cols[j])
+			}
 		}
+		points(one3$bin, one3$d, col=plot_cols[j], cex=0.7)
 	}
 }
 
@@ -116,7 +121,7 @@ superpops = read.csv(opt$info, header=T, as.is=T)
 d_freqs$d = d_freqs$d * 100
 
 # pop-combi per page
-if (opt$singlepop){
+if (opt$unipop){
 	d_freqs$paste_pop = paste(d_freqs[,1], d_freqs[,2], d_freqs[,3], d_freqs[,4], sep="_")
 } else {
 	d_freqs$paste_pop = paste(d_freqs[,1], d_freqs[,2], d_freqs[,4], sep="_")
