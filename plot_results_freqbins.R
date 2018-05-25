@@ -82,7 +82,7 @@ plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL){
 }
 
 # plot range of # of informative sites for each freqbin
-plot_n_sites = function(input){
+plot_n_sites = function(input, ymax=NULL){
 	xlab="Derived allele frequency in X"
 	ylab="# ABBA/BABA sites"
 	subtitel = paste0(min(input$n_sites)," - ", max(input$n_sites), " informative sites")
@@ -91,7 +91,12 @@ plot_n_sites = function(input){
 	min_sites = tapply(input$n_sites, input$bin, min) 
 	max_sites = tapply(input$n_sites, input$bin, max)
 	x = as.numeric(names(min_sites)) # TODO: make xlim parameter for zoom-ins
-	plot(x, mean_sites, type="h", lwd=4, col="steelblue", ylim=c(0, max(max_sites)), xlim=c(0,1.05)
+	
+	if (is.null(ymax)){
+		ymax = max(max_sites)
+	}
+	
+	plot(x, mean_sites, type="h", lwd=4, col="steelblue", ylim=c(0, ymax), xlim=c(0,1.05)
 		, xlab="", ylab=ylab)
 	segments(x0=x, y0=min_sites, y1=max_sites)
 	
@@ -128,7 +133,7 @@ if (opt$autoswitch){
 			d_freqs[page_rows,c(1,2)] = d_freqs[page_rows,c(2,1)]
 		}
 	}
-}	
+}
 
 
 ## plot page per pop-combi
@@ -139,14 +144,16 @@ pdf(opt$outpdf, width=11, height=8)
 		# compute y-axis range for plot_d_freqs (in %)
 		ymin = min(0, min(d_freqs$d)) * 1.1
 		ymax = max(0, max(d_freqs$d)) * 1.1 # for space above for legends
+		ymax_sites = max(d_freqs$n_sites)
 	} else {
 		ymin = NULL
 		ymax = NULL
+		ymax_sites = NULL
 	}
 	for (pp in combis){
 		page_data = d_freqs[d_freqs$paste_pop == pp,]
 		plot_d_freqs(page_data, superpops, ymin=ymin, ymax=ymax)
-		plot_n_sites(page_data)
+		plot_n_sites(page_data, ymax_sites)
 	}
 dev.off()
 
