@@ -17,6 +17,8 @@ option_list = list(
 		help="y-axis is fixed for whole input dataset. If not, y-axis is resized for every plot"),
 	make_option(c("-s", "--singlepop"), action="store_true", default=FALSE,
 		help="Generate one plot per pop3. By default all pop3 for one pop1-pop2-pop4 combi are plotted together."),
+	make_option(c("-a", "--autoswitch"), action="store_true", default=FALSE,
+		help="If median D < 0, pop1 and pop2 get switched to always have overall positive values."),
 	make_option(c("-l", "--lines"), action="store_true", default=FALSE,
 		help="Draw lines instead of dots.")
 )
@@ -41,14 +43,8 @@ if (is.null(opt$info)){
 #### helper
 
 # plot D(pop1, pop2, X, pop4) per freqbin
-plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL , auto_switch=TRUE){
+plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL){
 	
-	# switch pop1-pop2 if median D is negative
-	if (auto_switch && (median(input$d) < 0)){
-		input$d = input$d * -1
-		input[,c(1,2)] = input[,c(2,1)]
-	}
-
 	# titel
 	titel = paste0("D(",unique(input$pop1),", ",unique(input$pop2),", X, ",unique(input$pop4),")")
 #	subtitel = paste0(min(input$n_sites)," - ", max(input$n_sites), " informative sites")
@@ -62,7 +58,7 @@ plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL , auto_switch=TRU
 
 	# empty plot
 	# TODO: make xlim parameter for zoom-ins
-	plot(input$bin, input$d, type="n", xlim=c(0,1.05), ylim=c(ymin,ymax), ylab=ylab, xlab=xlab)  
+	plot(input$bin, input$d, type="n", xlim=c(0,1.07), ylim=c(ymin,ymax), ylab=ylab, xlab=xlab)  
 	# add grid lines
 	abline(h=0, col="lightblue")
 	for (k in seq(0.01, 0.05, 0.01)){
@@ -120,6 +116,20 @@ if (opt$singlepop){
 } else {
 	d_freqs$paste_pop = paste(d_freqs[,1], d_freqs[,2], d_freqs[,4], sep="_")
 }
+combis = unique(d_freqs$paste_pop)
+
+
+# switch pop1-pop2 if median D is negative
+if (opt$autoswitch){
+	for (i in 1:length(combis)){
+		page_rows = d_freqs$paste_pop == combis[i]
+		if (median(d_freqs[page_rows, "d"]) < 0){
+			d_freqs[page_rows, "d"] = d_freqs[page_rows, "d"] * -1
+			d_freqs[page_rows,c(1,2)] = d_freqs[page_rows,c(2,1)]
+		}
+	}
+}	
+
 
 ## plot page per pop-combi
 pdf(opt$outpdf, width=11, height=8)
@@ -129,16 +139,13 @@ pdf(opt$outpdf, width=11, height=8)
 		# compute y-axis range for plot_d_freqs (in %)
 		ymin = min(0, min(d_freqs$d)) * 1.1
 		ymax = max(0, max(d_freqs$d)) * 1.1 # for space above for legends
-		sw = FALSE  # don't switch pop1 and pop2 for overall negative D (fixed ylim not appropriate for that)
-		# TODO: allow this
 	} else {
 		ymin = NULL
 		ymax = NULL
-		sw = TRUE
 	}
-	for (pp in unique(d_freqs$paste_pop)){
+	for (pp in combis){
 		page_data = d_freqs[d_freqs$paste_pop == pp,]
-		plot_d_freqs(page_data, superpops, ymin=ymin, ymax=ymax, auto_switch=sw)
+		plot_d_freqs(page_data, superpops, ymin=ymin, ymax=ymax)
 		plot_n_sites(page_data)
 	}
 dev.off()

@@ -16,7 +16,9 @@ option_list = list(
 	make_option(c("-v", "--varpop"), type="integer", default=3,
 		help="{1,2,3,4} population that is variable in one plot (x-axis) \n\t\tdefault = %default"),
 	make_option(c("-f", "--fixedy"), action="store_true", default=FALSE,
-		help="y-axis is fixed for whole input dataset. If not, y-axis is resized for every plot")
+		help="y-axis is fixed for whole input dataset. If not, y-axis is resized for every plot"),
+	make_option(c("-a", "--autoswitch"), action="store_true", default=FALSE,
+		help="If median D < 0, pop1 and pop2 get switched to always have overall positive values.")
 )
 
 # -i, --info) .csv table with 4 columns like (superpops): 
@@ -41,15 +43,9 @@ if (is.null(opt$info)){
 #### helper
 
 # plot barplot for D(pop1, pop2, pop3, pop4) with 3 pops fixed combi
-plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=0.8, auto_switch=TRUE){
+plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=0.8){
 	
-	# switch pop1-pop2 if median D is negative
-	if (auto_switch && (median(input$d) < 0)){
-		input$d = input$d * -1
-		input$z = input$z * -1
-		input[,c(1,2)] = input[,c(2,1)]
-	}
-	
+
 	# check which pop-position is variable 
 	n_pops = apply(input[,1:4], 2, function(x) length(unique(x))) 
 	varcol = which(n_pops != 1)
@@ -98,13 +94,6 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 	cexnames = 1 - (1/300) * nrow(input)
 	cexnames = max(0.5, cexnames)
 
-	# x-axis (this approach would create an additional plot in pdf since type="n" is not available for barplot) TODO: maybe change to plot(..., type="h")
-	# and use this xlim in plot together with xaxs="i"
-#	# do a fake plot to get the x-coords of the bars
-#	bars = barplot(input$d, width=0.8, space=spaces, xaxs="i")
-#	side_space = (bars[nrow(bars),1] - bars[1,1]) * 0.05
-#	xlim=c(bars[1,1] - side_space, bars[nrow(bars),1] + side_space)
-		
 	input$asterix = ""
 	input[abs(input$z) > 2, "asterix"] = "*"
 	input[abs(input$z) > 3, "asterix"] = "**"
@@ -139,7 +128,7 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 	mtext(subtitel, line=-1, adj=0.5, cex=mcex) 
 
 	# legend Z-scores
-	legend("topleft",cex=legcex,ncol=2,legend=c("*", "**", "|Z| > 2","|Z| > 3"),bty="n",title="weighted block Jackknife")
+	legend("topleft",cex=legcex,ncol=2,legend=c("*", "**", "|Z| > 2","|Z| > 3"),bty="n",title=" weighted block Jackknife")
 	# legend populations
 	legend("topright",cex=legcex,ncol=3,legend=unique(input$super),bty="n",fill=colors()[unique(input$color)],title="super populations")
 
@@ -161,6 +150,19 @@ combis = unique(out_d_pops)
 combis = paste(combis[,1], combis[,2], combis[,3], sep="_")
 out_d_pops = paste(out_d_pops[,1], out_d_pops[,2], out_d_pops[,3], sep="_")
 
+# switch pop1-pop2 if median D is negative
+if (opt$autoswitch){
+	for (i in 1:length(combis)){
+		trio_rows = out_d_pops == combis[i]
+		if (median(out_d[trio_rows, "d"]) < 0){
+			out_d[trio_rows, "d"] = out_d[trio_rows, "d"] * -1
+			out_d[trio_rows, "z"] = out_d[trio_rows, "z"] * -1
+			out_d[trio_rows,c(1,2)] = out_d[trio_rows,c(2,1)]
+		}
+	}
+}	
+
+
 ## plot genomewide results
 pdf(opt$outpdf, width=13)
 	par(cex.main=0.8, oma=c(2.5,0,0,0), cex.lab=1)
@@ -169,16 +171,14 @@ pdf(opt$outpdf, width=13)
 		out_d$se = out_d$d / out_d$z
 		out_d$se[is.na(out_d$se)] = 0  # if D=0 -> Z=0 -> se=NA (0)
 		ymin = min(0, min(out_d$d - out_d$se) * 100) * 1.1
-		ymax = max(0, max(out_d$d + out_d$se) * 100) * 1.4 # for space above for legends
-		sw = FALSE  # don't switch pop1 and pop2 for overall negative D (fixed ylim not appropriate for that)
+		ymax = max(0, max(out_d$d + out_d$se) * 100) * 1.5 # for space above for legends
 	} else {
 		ymin = NULL
 		ymax = NULL
-		sw = TRUE
 	}
 	for (i in 1:length(combis)){
 		one_trio = out_d[out_d_pops == combis[i],]
-		plot_d_bars(one_trio, superpops, ymin=ymin, ymax=ymax, auto_switch=sw)
+		plot_d_bars(one_trio, superpops, ymin=ymin, ymax=ymax)
 	}
 dev.off()
 
