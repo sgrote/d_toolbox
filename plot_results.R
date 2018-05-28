@@ -4,18 +4,6 @@
 
 library(optparse)
 
-option_list = list(
-	make_option(c("-d", "--infile"), type="character", default="out_d",
-		help="d-stats input \n\t\tdefault = %default"),
-	make_option(c("-o", "--outpdf"), type="character", default="D_heatmaps.pdf",
-		help="output pdf file name \n\t\tdefault = %default")
-)
-
-opt_parser = OptionParser(option_list=option_list, description="\nmake a heatmap of D(X, Y, pop3, pop4) for every pop3-pop4 combination.")
-opt = parse_args(opt_parser)
-print(opt)
-
-
 # plot d in heatmap given dataframe: [pop1, pop2, pop3, pop4, d, z] for one pop3
 plot_d = function(dtab, sub="", dendro=FALSE){
 	if(length(unique(dtab[,3])) != 1 | length(unique(dtab[,4])) != 1){
@@ -72,16 +60,33 @@ plot_d = function(dtab, sub="", dendro=FALSE){
 
 
 ######################################
-out_d = read.table(opt$infile, as.is=T, header=T)
 
-## plot genomewide results
-pdf(opt$outpdf)
-	par(cex.main=0.8, oma=c(1,0,0,1.5), cex.lab=1)
-	combis = unique(out_d[,c("pop3", "pop4")])
-	for (i in 1:nrow(combis)){
-		one34 = out_d[out_d$pop3==combis[i,"pop3"] & out_d$pop4==combis[i,"pop4",],]
-		# heatmap
-		plot_d(one34, dendro=TRUE)
-	}
-dev.off()
+## main
+
+if(! interactive()){
+	
+	option_list = list(
+		make_option(c("-d", "--infile"), type="character", default="out_d",
+			help="d-stats input \n\t\tdefault = %default"),
+		make_option(c("-o", "--outpdf"), type="character", default="D_heatmaps.pdf",
+			help="output pdf file name \n\t\tdefault = %default")
+	)
+
+	opt_parser = OptionParser(option_list=option_list, description="\nmake a heatmap of D(X, Y, pop3, pop4) for every pop3-pop4 combination.")
+	opt = parse_args(opt_parser)
+	print(opt)
+
+	out_d = read.table(opt$infile, as.is=T, header=T)
+
+	## plot genomewide results
+	pdf(opt$outpdf)
+		par(cex.main=0.8, oma=c(1,0,0,1.5), cex.lab=1)
+		combis = unique(out_d[,c("pop3", "pop4")])
+		for (i in 1:nrow(combis)){
+			one34 = out_d[out_d$pop3==combis[i,"pop3"] & out_d$pop4==combis[i,"pop4",],]
+			# heatmap
+			plot_d(one34, dendro=TRUE)
+		}
+	dev.off()
+}
 
