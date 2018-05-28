@@ -12,18 +12,25 @@ library(optparse)
 #### helper
 
 # plot D(pop1, pop2, X, pop4) per freqbin
-plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL, lege=TRUE){
+plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL, lege=TRUE, namesfile=NULL){
 	
+	# merge with superpop-info and define spaces between bars
+	plot_pops = unique(input$pop3)
+	plot_cols = colors()[superpops[match(plot_pops, superpops[,1]), 3]]
+
+	# convert to official names
+	if (! is.null(namesfile)){
+		offinames = read.csv(namesfile, header=T, as.is=T)
+		input[,1:4] = apply(input[,1:4], 2, get_offi, offinames)
+		plot_pops = get_offi(plot_pops, offinames)
+	}
+
 	# titel
 	titel = paste0("D(",unique(input$pop1),", ",unique(input$pop2),", X, ",unique(input$pop4),")")
 #	subtitel = paste0(min(input$n_sites)," - ", max(input$n_sites), " informative sites")
 	ylab="D[%]"
 #	xlab="Derived allele frequency in X"
 	xlab=""
-
-	# merge with superpop-info and define spaces between bars
-	plot_pops = unique(input$pop3)
-	plot_cols = colors()[superpops[match(plot_pops, superpops[,1]), 3]]
 
 	# empty plot
 	# TODO: make xlim parameter for zoom-ins
@@ -81,6 +88,12 @@ plot_n_sites = function(input, ymax=NULL){
 	
 }
 
+get_offi = function(x, offinames){
+    offi = offinames[match(x, offinames[,1]), 2]
+    offi[is.na(offi)] = x[is.na(offi)]
+    return(offi)
+}
+
 
 #### main
 
@@ -102,7 +115,9 @@ if (! interactive()){
 		make_option(c("-l", "--lines"), action="store_true", default=FALSE,
 			help="Draw lines between dots."),
 		make_option(c("-s", "--smooth"), action="store_true", default=FALSE,
-			help="Draw loess curves.")
+			help="Draw loess curves."),
+		make_option(c("-n", "--names"), type="character",
+			help="optional .csv table with 2 columns: sample name, official name")
 	)
 
 	# -i, --info) .csv table with 4 columns like (superpops): 
@@ -165,7 +180,7 @@ if (! interactive()){
 		}
 		for (pp in combis){
 			page_data = d_freqs[d_freqs$paste_pop == pp,]
-			plot_d_freqs(page_data, superpops, ymin=ymin, ymax=ymax)
+			plot_d_freqs(page_data, superpops, ymin=ymin, ymax=ymax, namesfile=opt$names)
 			plot_n_sites(page_data, ymax_sites)
 		}
 dev.off()

@@ -8,7 +8,7 @@ library("optparse")
 #### helper
 
 # plot barplot for D(pop1, pop2, pop3, pop4) with 3 pops fixed combi
-plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=0.8, lege=c(T,T)){
+plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=0.8, lege=c(T,T), namesfile=NULL){
 	
 
 	# check which pop-position is variable 
@@ -17,7 +17,20 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 	if (length(varcol) != 1){
 		stop("More than one of [pop1, pop2, pop3, pop4] is not unique.")
 	}
-	
+
+	# merge with superpop-info and define spaces between bars
+	input = cbind(input, superpops[match(input[,varcol], superpops[,1]), 2:4])
+	input = input[order(input$order, input[,varcol]),]
+	superbreak = c("dummy", input$super[-nrow(input)]) != input$super # for spaces
+	spaces = rep(0.2, nrow(input))
+	spaces[superbreak] = 0.8
+
+	# convert to official names
+	if (! is.null(namesfile)){
+		offinames = read.csv(namesfile, header=T, as.is=T)
+		input[,1:4] = apply(input[,1:4], 2, get_offi, offinames)
+	}
+
 	# title
 	if (varcol == 1){
 		titel = paste0("D(X, ",unique(input$pop2),", ",unique(input$pop3),", ",unique(input$pop4),")")
@@ -39,19 +52,12 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 	# replace se=NA (caused by D=0)
 	input$se[is.na(input$se)] = 0
 
-	# merge with superpop-info and define spaces between bars
-	input = cbind(input, superpops[match(input[,varcol], superpops[,1]), 2:4])
-	input = input[order(input$order, input[,varcol]),]
-	superbreak = c("dummy", input$super[-nrow(input)]) != input$super # for spaces
-	spaces = rep(0.2, nrow(input))
-	spaces[superbreak] = 0.8
-
 	# dynamic y-axis
 	if (is.null(ymin)) 	{
 		ymax = max((max(input$d + input$se)), 0)
 		ymin = min(min(input$d - input$se), 0)
 		span = ymax - ymin
-		ymax = ymax + abs(0.2*span)
+		ymax = ymax + abs(0.4*span)
 		ymin = ymin - abs(0.05*span)
 	}
 	
@@ -102,7 +108,12 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 	}
 }
 
-
+# replace sample name with official name
+get_offi = function(x, offinames){
+    offi = offinames[match(x, offinames[,1]), 2]
+    offi[is.na(offi)] = x[is.na(offi)]
+    return(offi)
+}
 
 #### main
 
@@ -120,7 +131,9 @@ if (! interactive()){
 		make_option(c("-f", "--fixedy"), action="store_true", default=FALSE,
 			help="y-axis is fixed for whole input dataset. If not, y-axis is resized for every plot"),
 		make_option(c("-a", "--autoswitch"), action="store_true", default=FALSE,
-			help="If median D < 0, pop1 and pop2 get switched to always have overall positive values.")
+			help="If median D < 0, pop1 and pop2 get switched to always have overall positive values."),
+		make_option(c("-n", "--names"), type="character",
+			help="optional .csv table with 2 columns: sample name, official name")
 	)
 
 	# -i, --info) .csv table with 4 columns like (superpops): 
@@ -181,7 +194,7 @@ if (! interactive()){
 		}
 		for (i in 1:length(combis)){
 			one_trio = out_d[out_d_pops == combis[i],]
-			plot_d_bars(one_trio, superpops, ymin=ymin, ymax=ymax)
+			plot_d_bars(one_trio, superpops, ymin=ymin, ymax=ymax, namesfile=opt$names)
 		}
 	dev.off()
 
