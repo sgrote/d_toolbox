@@ -6,39 +6,6 @@
 
 library(optparse)
  
-option_list = list(
-	make_option(c("-d", "--infile"), type="character", default="out_d_freqbins", 
-		help="d-stats input \n\t\tdefault = %default"),
-	make_option(c("-o", "--outpdf"), type="character", default="D_freqbins.pdf", 
-		help="output pdf file name \n\t\tdefault = %default"),
-	make_option(c("-i", "--info"), type="character", 
-		help=".csv table with 4 columns: pop, superpop, color, order"),
-	make_option(c("-f", "--fixedy"), action="store_true", default=FALSE,
-		help="y-axis is fixed for whole input dataset. If not, y-axis is resized for every plot"),
-	make_option(c("-u", "--unipop"), action="store_true", default=FALSE,
-		help="Generate one plot per pop3. By default all pop3 for one pop1-pop2-pop4 combi are plotted together."),
-	make_option(c("-a", "--autoswitch"), action="store_true", default=FALSE,
-		help="If median D < 0, pop1 and pop2 get switched to always have overall positive values."),
-	make_option(c("-l", "--lines"), action="store_true", default=FALSE,
-		help="Draw lines between dots."),
-	make_option(c("-s", "--smooth"), action="store_true", default=FALSE,
-		help="Draw loess curves.")
-)
-
-# -i, --info) .csv table with 4 columns like (superpops): 
-	# pop			super	color	order
-	# CHB			EAS		123		6
-	# JPT			EAS		123		6
-	# BantuHerero	AFR		91		2
-	# BantuKenya	AFR		91		2
-
-opt_parser = OptionParser(option_list=option_list, description="\nPlot D(pop1, pop2, X, pop4) per X-freq for every pop1-pop2-pop4 combi as lines or dots. Color by info given in .csv file.")
-opt = parse_args(opt_parser)
-print(opt)
-
-if (is.null(opt$info)){
-	stop("Missing info-file -i/--info")
-}
 
 
 
@@ -113,52 +80,90 @@ plot_n_sites = function(input, ymax=NULL){
 
 #### main
 
-# read input
-d_freqs = read.table(opt$infile, as.is=T, header=T)
-superpops = read.csv(opt$info, header=T, as.is=T)
+if (! interactive()){
 
-# convert D to percent
-d_freqs$d = d_freqs$d * 100
+	option_list = list(
+		make_option(c("-d", "--infile"), type="character", default="out_d_freqbins", 
+			help="d-stats input \n\t\tdefault = %default"),
+		make_option(c("-o", "--outpdf"), type="character", default="D_freqbins.pdf", 
+			help="output pdf file name \n\t\tdefault = %default"),
+		make_option(c("-i", "--info"), type="character", 
+			help=".csv table with 4 columns: pop, superpop, color, order"),
+		make_option(c("-f", "--fixedy"), action="store_true", default=FALSE,
+			help="y-axis is fixed for whole input dataset. If not, y-axis is resized for every plot"),
+		make_option(c("-u", "--unipop"), action="store_true", default=FALSE,
+			help="Generate one plot per pop3. By default all pop3 for one pop1-pop2-pop4 combi are plotted together."),
+		make_option(c("-a", "--autoswitch"), action="store_true", default=FALSE,
+			help="If median D < 0, pop1 and pop2 get switched to always have overall positive values."),
+		make_option(c("-l", "--lines"), action="store_true", default=FALSE,
+			help="Draw lines between dots."),
+		make_option(c("-s", "--smooth"), action="store_true", default=FALSE,
+			help="Draw loess curves.")
+	)
 
-# pop-combi per page
-if (opt$unipop){
-	d_freqs$paste_pop = paste(d_freqs[,1], d_freqs[,2], d_freqs[,3], d_freqs[,4], sep="_")
-} else {
-	d_freqs$paste_pop = paste(d_freqs[,1], d_freqs[,2], d_freqs[,4], sep="_")
-}
-combis = unique(d_freqs$paste_pop)
+	# -i, --info) .csv table with 4 columns like (superpops): 
+		# pop			super	color	order
+		# CHB			EAS		123		6
+		# JPT			EAS		123		6
+		# BantuHerero	AFR		91		2
+		# BantuKenya	AFR		91		2
+
+	opt_parser = OptionParser(option_list=option_list, description="\nPlot D(pop1, pop2, X, pop4) per X-freq for every pop1-pop2-pop4 combi as lines or dots. Color by info given in .csv file.")
+	opt = parse_args(opt_parser)
+	print(opt)
+
+	if (is.null(opt$info)){
+		stop("Missing info-file -i/--info")
+	}
 
 
-# switch pop1-pop2 if median D is negative
-if (opt$autoswitch){
-	for (i in 1:length(combis)){
-		page_rows = d_freqs$paste_pop == combis[i]
-		if (median(d_freqs[page_rows, "d"]) < 0){
-			d_freqs[page_rows, "d"] = d_freqs[page_rows, "d"] * -1
-			d_freqs[page_rows,c(1,2)] = d_freqs[page_rows,c(2,1)]
+	# read input
+	d_freqs = read.table(opt$infile, as.is=T, header=T)
+	superpops = read.csv(opt$info, header=T, as.is=T)
+
+	# convert D to percent
+	d_freqs$d = d_freqs$d * 100
+
+	# pop-combi per page
+	if (opt$unipop){
+		d_freqs$paste_pop = paste(d_freqs[,1], d_freqs[,2], d_freqs[,3], d_freqs[,4], sep="_")
+	} else {
+		d_freqs$paste_pop = paste(d_freqs[,1], d_freqs[,2], d_freqs[,4], sep="_")
+	}
+	combis = unique(d_freqs$paste_pop)
+
+
+	# switch pop1-pop2 if median D is negative
+	if (opt$autoswitch){
+		for (i in 1:length(combis)){
+			page_rows = d_freqs$paste_pop == combis[i]
+			if (median(d_freqs[page_rows, "d"]) < 0){
+				d_freqs[page_rows, "d"] = d_freqs[page_rows, "d"] * -1
+				d_freqs[page_rows,c(1,2)] = d_freqs[page_rows,c(2,1)]
+			}
 		}
 	}
-}
 
 
-## plot page per pop-combi
-pdf(opt$outpdf, width=11, height=8)
-	par(cex.main=1.2, cex.lab=1.2, oma=c(5,1.5,4,1), mar=c(1,4,2,2))
-	layout(matrix(c(1,1,2),3,1))
-	if (opt$fixedy){
-		# compute y-axis range for plot_d_freqs (in %)
-		ymin = min(0, min(d_freqs$d)) * 1.1
-		ymax = max(0, max(d_freqs$d)) * 1.1 # for space above for legends
-		ymax_sites = max(d_freqs$n_sites)
-	} else {
-		ymin = NULL
-		ymax = NULL
-		ymax_sites = NULL
-	}
-	for (pp in combis){
-		page_data = d_freqs[d_freqs$paste_pop == pp,]
-		plot_d_freqs(page_data, superpops, ymin=ymin, ymax=ymax)
-		plot_n_sites(page_data, ymax_sites)
-	}
+	## plot page per pop-combi
+	pdf(opt$outpdf, width=11, height=8)
+		par(cex.main=1.2, cex.lab=1.2, oma=c(5,1.5,4,1), mar=c(1,4,2,2))
+		layout(matrix(c(1,1,2),3,1))
+		if (opt$fixedy){
+			# compute y-axis range for plot_d_freqs (in %)
+			ymin = min(0, min(d_freqs$d)) * 1.1
+			ymax = max(0, max(d_freqs$d)) * 1.1 # for space above for legends
+			ymax_sites = max(d_freqs$n_sites)
+		} else {
+			ymin = NULL
+			ymax = NULL
+			ymax_sites = NULL
+		}
+		for (pp in combis){
+			page_data = d_freqs[d_freqs$paste_pop == pp,]
+			plot_d_freqs(page_data, superpops, ymin=ymin, ymax=ymax)
+			plot_n_sites(page_data, ymax_sites)
+		}
 dev.off()
 
+}
