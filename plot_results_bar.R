@@ -8,7 +8,7 @@ library("optparse")
 #### helper
 
 # plot barplot for D(pop1, pop2, pop3, pop4) with 3 pops fixed combi
-plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=0.8, lege=c(T,T), namesfile=NULL){
+plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=0.8, lege=c(T,T), infsites=TRUE, namesfile=NULL){
 	
 
 	# check which pop-position is variable 
@@ -42,9 +42,6 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 		titel = paste0("D(",unique(input$pop1),", ",unique(input$pop2),", ",unique(input$pop3),", X)")
 	}
 	
-	# subtitel
-	subtitel = paste0(min(input$n_sites)," - ", max(input$n_sites), " informative sites")
-
 	# convert to %
 	input$se = 100 * (input$d / input$z)
 	input$d = 100 * input$d
@@ -96,7 +93,10 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 	}
 	
 	# subtitle
-	mtext(subtitel, line=-1, adj=0.5, cex=mcex) 
+	if (infsites){
+		subtitel = paste0(min(input$n_sites)," - ", max(input$n_sites), " informative sites")
+		mtext(subtitel, line=-1, adj=0.5, cex=mcex) 
+	}
 
 	if (lege[1]){
 		# legend Z-scores
