@@ -8,7 +8,7 @@ library("optparse")
 #### helper
 
 # plot barplot for D(pop1, pop2, pop3, pop4) with 3 pops fixed combi
-plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=0.8){
+plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=0.8, lege=TRUE){
 	
 
 	# check which pop-position is variable 
@@ -92,11 +92,12 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 	# subtitle
 	mtext(subtitel, line=-1, adj=0.5, cex=mcex) 
 
-	# legend Z-scores
-	legend("topleft",cex=legcex,ncol=2,legend=c("*", "**", "|Z| > 2","|Z| > 3"),bty="n",title=" weighted block Jackknife")
-	# legend populations
-	legend("topright",cex=legcex,ncol=3,legend=unique(input$super),bty="n",fill=colors()[unique(input$color)],title="super populations")
-
+	if (lege){
+		# legend Z-scores
+		legend("topleft",cex=legcex,ncol=2,legend=c("*", "**", "|Z| > 2","|Z| > 3"),bty="n",title=" weighted block Jackknife")
+		# legend populations
+		legend("topright",cex=legcex,ncol=3,legend=unique(input$super),bty="n",fill=colors()[unique(input$color)],title="super populations")
+	}
 }
 
 

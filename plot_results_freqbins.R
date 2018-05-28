@@ -12,7 +12,7 @@ library(optparse)
 #### helper
 
 # plot D(pop1, pop2, X, pop4) per freqbin
-plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL){
+plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL, lege=TRUE){
 	
 	# titel
 	titel = paste0("D(",unique(input$pop1),", ",unique(input$pop2),", X, ",unique(input$pop4),")")
@@ -36,8 +36,12 @@ plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL){
 	# titel
 	mtext(titel, line=2, adj=0.5, cex=par()$cex.main, font=2)
 #	mtext(subtitel, line=-2, adj=0.5, cex=par()$cex.lab) 
+	
 	# legend
-	legend("topright", legend=plot_pops, lty=1, col=plot_cols, bty="n", cex=1.2, lwd=3)
+	if (lege){
+		legend("topright", legend=plot_pops, lty=1, col=plot_cols, bty="n", cex=1.2, lwd=3)
+	}
+	
 	# add points/lines for each pop3
 	for (j in 1:length(plot_pops)){
 		one3 = input[input$pop3 == plot_pops[j],]
