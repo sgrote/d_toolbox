@@ -15,13 +15,13 @@ import vcf_line_filter as F
 import base_to_gt as B
 
 def main():
-	parser = argparse.ArgumentParser(description='Merge a vcf files from STDIN with a file containing [chr | pos | base] (compressed or uncompressed). Optional filtering of vcf. Header is taken from vcf; positions not in vcf are skipped. Writes to STDOUT.', usage='zcat file1.vcf.gz | merge_vcf_base.py base_file.gz newSample --filter1 "QUAL > 3" --require2')
+	parser = argparse.ArgumentParser(description='Merge a vcf file from STDIN with a file containing [chr | pos | base] (compressed or uncompressed). Optional filtering of vcf. Header is taken from vcf; positions not in vcf are skipped. Writes to STDOUT.', usage='zcat file1.vcf.gz | merge_vcf_base.py base_file.gz newSample --filter1 "QUAL > 3" --require2')
 	parser.add_argument("base_file", help="File with chrom, pos, base; 1-based")
 	parser.add_argument("base_name", help="Name of new column in the merged vcf-header")
 	parser.add_argument("--var", action="store_true", help="Restrict to variable sites")
 	parser.add_argument("--gt_only", action="store_true", help="Restrict to genotypes in sample columns")
 	parser.add_argument("--fill2", action="store_true", help="Fill base_file with REF 0/0 for missing positions, else ./. (this will rarely be useful, only when base_file contains only non-REF bases)")
-	parser.add_argument("--require2", action="store_true", help="Restrict to positions present base_file")
+	parser.add_argument("--require2", action="store_true", help="Restrict to positions present in base_file")
 	parser.add_argument("--keep_miss", action="store_true", help="Keep vcf lines that were filtered out as missing data ./. even if base is not present. (If filter fails but base present line is always kept.)")
 	parser.add_argument("--filter1", help="Expression to filter vcf, e.g. 'QUAL > 0 and AC > 10'. Acts on QUAL, FILTER and INFO fields. CAUTION: needs whitespaces around keywords.")
 	parser.add_argument("--filter_ind1", help="Expression to filter individual genotypes of vcf, e.g. 'GF >= 0 or GT == 1/1'. Acts on keywords in FORMAT. Not passing genotypes will be replaced by './.' . CAUTION: needs whitespaces around keywords.")
@@ -102,7 +102,7 @@ if __name__ == "__main__":
 	main()
 
 ''' test
-VCF=/mnt/scratch/steffi/D/Vcfs/mergedArchModernApes/merged_high_chr21.vcf.gz
+VCF=/mnt/sequencedb/gendivdata/2_genotypes/mergedArchModernApes/merged_ancient_apes_sgdp1_chr21.vcf.gz
 BASE=/mnt/scratch/steffi/D/random_bases/Forbes_Quarry/FQDeam/ForbesDeam_chr21.tab.gz
 MERGE=/mnt/expressions/steffi/D/d_toolbox/merge_vcf_base.py
 zcat $VCF | $MERGE $BASE ForbesDeam | less -S
