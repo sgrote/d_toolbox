@@ -2,8 +2,6 @@
 
 # compute ABBA and BABA counts for D(pop1, pop2, pop3, pop4) per ANCESTRAL-DERIVED allele pair
 # based on RANDOMLY drawn alleles 
-# (TODO: maybe draw a random allele only for the outgroup,
-#    or make it accurate with A/B switching for non-binary outgroup, but probably it doesnt matter)
 # needs 'out_d' and a full 'sites' file (run d_stats.py with --sites 'full' and d_genomewide.R before)
 # population-matches are retrieved from out_d, can also take another file which might be a subset pop-matches
 # output: abba,baba,per pop-match and A/B allele (A,C,T,G)
@@ -55,7 +53,6 @@ count_abba_baba = function(freqs, pops, base_combis){
 	county = cbind(abba_sum, baba_sum)
 	county[is.na(county)] = 0
 	row.names(county) = base_combis
-	
 	return(county)
 }
 
@@ -104,7 +101,7 @@ for (i in 1:length(chroms)){
 		setwd("../")
 		next
 	}
-	sites = suppressMessages(as.data.frame(read_tsv("sites")))
+	sites = read.table("sites", header=T, as.is=T)
 	if (ncol(sites) < 6){
 		message("skipping ", chroms[i], ". sites file lacks columns (run d_stats.py with --sites 'full' option).")
 		setwd("../")
@@ -118,7 +115,7 @@ for (i in 1:length(chroms)){
 
 	## loop over pops
 	for (p in unique(paste_pops)){
-		pops = unlist(strsplit(p, "_"))
+		pops = unlist(out[paste_pops == p,][1,1:4])
 		# pop1 pop2 pop3 pop4 A B abba baba  per pop1-pop4 combi
 		counts = count_abba_baba(sites, pops, bc[,3])
 		out[paste_pops == p, c("abba","baba")] = out[paste_pops == p, c("abba","baba")] + counts
