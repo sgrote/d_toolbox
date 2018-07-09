@@ -37,7 +37,7 @@ def main():
 	vcf_header = D.get_sample_header(vcf)
 
 	# get list of populations
-	pops = get_pops_from_file(args.pops)
+	pops = D.get_pops_from_file(args.pops)
 	
 	# from info-file and vcf-header: get col-numbers for every relevant pop and sex for every col
 	pop_colnums, col_gender = D.get_pop_colnumbers(args.info, vcf_header, pops)
@@ -46,17 +46,6 @@ def main():
 	allele_freqs(vcf, pop_colnums, pops, args.transver)
 
 
-
-def get_pops_from_file(pop_file):
-	'''
-	in: file with one column containing population names
-	out: list [pop1, pop2, ...]
-	'''
-	pops = []
-	with open(pop_file, "r") as p:
-		for pop in p:
-			pops.append(pop.rstrip())
-	return pops
 
 # CAUTION this assumes pure genotype-input
 def allele_freqs(vcf, pop_colnums, pops, transver=False):

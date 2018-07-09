@@ -68,6 +68,20 @@ def get_pops_from_files(pop1, pop2, pop3, pop4):
 	return pops
 
 
+
+def get_pops_from_file(pop_file):
+	'''
+	in: file with one column containing population names
+	out: list [pop1, pop2, ...]
+	'''
+	pops = []
+	with open(pop_file, "r") as p:
+		for pop in p:
+			pops.append(pop.rstrip())
+	return pops
+
+
+
 def check_pw_pops(pops):
 	'''
 	check that pops [[pop1][pop2][pop3][pop4]] have same length
