@@ -8,9 +8,6 @@ FORMAT is taken from one of the files, or if gt_only replaced by "GT"
 optional filtering on quality (for an already merged file it's harder to filter on file-specific criteria)
 '''
 
-# maybe TODO: accurate merging of FORMAT, "1/1:.:." for missing (but mostly --gt_only --> not needed)
-# maybe TODO: modify merge_alt_alleles to take position of genotype as input (now for "1/1:other:info the genotype is assumed to be the first entry")
-
 
 import sys
 import argparse
@@ -124,6 +121,8 @@ def main():
 	parser.add_argument("--filter_ind1", help="Expression to filter individual genotypes of vcf1, e.g. 'GF >= 0 or GT == 1/1'. Acts on keywords in FORMAT. Not passing genotypes will be replaced by './.' . CAUTION: needs whitespaces around keywords.")
 	parser.add_argument("--filter_ind2", help="Like --filter_ind1 for vcf2")
 	parser.add_argument("--header", choices=["vcf1", "vcf2"], help="optional: take the header from vcf1 or vcf2. If not specified a minimal standard header is added.")
+	parser.add_argument("--accu_alt", action="store_true", help="Check that all ALT alleles are really present in data, if not remove base from ALT and update numbers in genotypes")
+
 	
 	args = parser.parse_args()
 
@@ -215,6 +214,9 @@ def main():
 					v2 = vcf_2.readline().split()
 				# print merged line if any
 				if out:
+					# check for ALT alleles that are not present in data (by filtering or like this in input)
+					if args.accu_alt:
+						out = M.check_complete_alt(out)
 					sys.stdout.write("\t".join(out) + "\n")
 			except (IndexError, ValueError) as errore:
 				sys.stderr.write(str(errore) + "\n")

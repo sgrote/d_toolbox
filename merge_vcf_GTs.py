@@ -134,8 +134,53 @@ merge_lines(line4, line5) == ['21','148','.','C','A,G,T','.','.','.','GT','0|1',
 
 '''
 
+# this can be useful when individual genotypes were filtered, uses functions from here
+def check_complete_alt(line):
+	'''
+	check if all ALT-bases are really in data, modify if needed
+	in: vcf_line as list of strings
+	out: original or updated vcf_line
+	'''
+	alt = line[4]
+	if alt == ".":
+		return line
+	alt_alleles = alt.split(",")
+	# check if all alt are in data
+	gts = line[9:]
+	# extract genotype from more complex field (first entry)
+	gts_string = "".join([g.split(":")[0] for g in gts])
+	presente = [str(i+1) in gts_string for i in range(len(alt_alleles))]
+	# return input if all alleles are there
+	if all(presente):
+		return line
+	# create new ALT field
+	new_alt = [a for (a,p) in zip(alt_alleles, presente) if p]
+	# replace by "." if none of the ALT alleles is really there
+	if len(new_alt) == 0:
+		alt_out = "."
+		# no GT-modification needed, must be {0,.}
+		gt_out = gts
+	else:
+		alt_out = ",".join(new_alt)
+		# update GTs (index of old alleles in new alleles order, None for removed alleles)
+		new_alt_indi = [new_alt.index(o) + 1 if o in new_alt else None for o in alt_alleles]
+		gt_out = [replace(gt, new_alt_indi) for gt in gts]
+	# put fixed line together
+	out_line = line[:4] + [alt_out] + line[5:9] + gt_out
+	return out_line
 
 
+''' test
+line0 = ['21','148','.','C','T,G','10','LowQual','AC=27','GT:GF','0/1:3','./2:-1'] # all ALT there
+line1 = ['21','148','.','C','T,G','10','LowQual','AC=27','GT:GF','0/1:3','./0:-1'] # second ALT miss
+line2 = ['21','148','.','C','T,G','10','LowQual','AC=27','GT:GF','0/2:3','./0:-1'] # first ALT miss
+line3 = ['21','148','.','C','.','10','PASS','.','GT','0|0','0|0'] # no ALT at all
+line4 = ['21','148','.','C','G,A','10','PASS','.','GT','0|0','0|0'] # all ALT miss
 
-	
+check_complete_alt(line0) == ['21','148','.','C','T,G','10','LowQual','AC=27','GT:GF','0/1:3','./2:-1']
+check_complete_alt(line1) == ['21','148','.','C','T','10','LowQual','AC=27','GT:GF','0/1:3','./0:-1']
+check_complete_alt(line2) == ['21','148','.','C','G','10','LowQual','AC=27','GT:GF','0/1:3','./0:-1']
+check_complete_alt(line3) == ['21','148','.','C','.','10','PASS','.','GT','0|0','0|0']
+check_complete_alt(line4) == ['21','148','.','C','.','10','PASS','.','GT','0|0','0|0']
 
+'''
