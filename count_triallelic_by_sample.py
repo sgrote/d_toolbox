@@ -100,7 +100,7 @@ def count_triallelic_by_sample(vcf, sample_index, outside_index):
 			# remaining site are biallelic or triallelic
 			
 			## unique variants outside samples 
-			outside_alleles = unique_variants(line, outside_index)
+			outside_alleles = D.unique_variants(line, outside_index)
 			
 			## if biallelic: check if its biallelic outside samples
 			if len(alt_alleles) == 1 and len(outside_alleles) == 2:
@@ -117,14 +117,14 @@ def count_triallelic_by_sample(vcf, sample_index, outside_index):
 					# (for perfect VCFs this would always be true, but here the ALT-field
 					#  from SGDP is not (yet) updated after genotype-filtering, so that there
 					#  are alleles in ALT which are not in any genotype)
-					sample_alleles = unique_variants(line, list(sample_index.values()))
+					sample_alleles = D.unique_variants(line, list(sample_index.values()))
 					if len(set(sample_alleles + outside_alleles)) == 3:
 						trial_samples += 1
 					## check if caused by singleton in one of the input-samples 
 					# get sample alleles
 					single_alleles = {}
 					for k,v in sample_index.items():
-						single_alleles[k] = unique_variants(line, [v])
+						single_alleles[k] = D.unique_variants(line, [v])
 					# check which ones are different from outside alleles
 					causer = []
 					for s,a in single_alleles.items():
@@ -142,24 +142,6 @@ def count_triallelic_by_sample(vcf, sample_index, outside_index):
 
 	return singletons, trial_samples, trial_outside_samples, bial_outside_samples
 	
-		
-		
-def unique_variants(vcf_line, vcf_colnums):
-	'''
-	return a set of uniqe allele indices
-	from vcf_line[vcf_colnums]
-	''' 
-	gts = [vcf_line[i] for i in vcf_colnums]
-	gt_string = "".join(gts)
-	gt_chars = set(gt_string)
-	gt_chars_clean = sorted([a for a in gt_chars if a not in "./|"])
-	return gt_chars_clean 
-
-''' test
-vcf = ['first_fields', '0/3', '.|.', './1', '2|2', '0|.']
-unique_variants(vcf, [1,5]) == ['0', '3']
-unique_variants(vcf, [2,3,4]) == ['1', '2']
-'''
 
 
 if __name__ == "__main__":

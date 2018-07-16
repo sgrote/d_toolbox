@@ -243,8 +243,154 @@ get_sample_colnumber(vcf_header, ["Denisova", "Altai"]) == {'Denisova': 3, 'Alta
 '''
 
 
+# useful if non-input samples should get masked (after modifying REF/ALT for input)
+def unique_pop_colnums(pop_colnums, n_samples):
+	'''
+	in: dict{pop:[cols]}, nr of samples in vcf
+	out: [unique pop columns] , [non-input columns]
+	'''
+	pop_cols = set()
+	for cols in pop_colnums.values():
+		pop_cols.update(set(cols))
+	pop_cols = sorted(list(pop_cols))
+	non_pop_cols = [i for i in range(9, n_samples+9) if i not in pop_cols]
+	return pop_cols, non_pop_cols
 
-# TODO: SGDP male X-genotypes: {'0/1': 84318, '1/1': 4259919, './.': 2997653, '0/0': 25124854}
+''' test
+pop_colnums = {"a":[10,12,9,14], "b":[9,10,13]}
+a, b = unique_pop_colnums(pop_colnums, 7)
+a == [9,10,12,13,14]
+b == [11,15]
+
+'''
+
+
+def unique_variants(vcf_line, vcf_colnums):
+	'''
+	return a set of uniqe allele indices
+	from vcf_line[vcf_colnums]
+	assumes genotypes only
+	''' 
+	gts = [vcf_line[i] for i in vcf_colnums]
+	gt_string = "".join(gts)
+	gt_chars = set(gt_string)
+	gt_chars_clean = sorted([a for a in gt_chars if a not in "./|"])
+	return gt_chars_clean 
+
+''' test
+vcf = ['first_fields', '0/3', '.|.', './1', '2|2', '0|.']
+unique_variants(vcf, [1,5]) == ['0', '3']
+unique_variants(vcf, [2,3,4]) == ['1', '2']
+'''
+
+
+def change_alt_index(vcf_line, vcf_colnums, old_al_index, new_al_index):
+	'''
+	modify input in place
+	in all vcf_line[vcf_colnums] replace old_al_index with new_all_index
+	either some-ALT -> REF, or some-ALT -> only ALT
+	update REF or ALT as needed
+	CAUTION: this requires that target index is NOT present in data
+	'''
+	# if old and new are the same, only update ALT if needed
+	if old_al_index == new_al_index:
+		if new_al_index == "0":
+			return None
+		if new_al_index == "1":
+			vcf_line[4] = vcf_line[4][0]
+			return None
+	if old_al_index == "0":
+		sys.stderr.write("Why would a REF-allele be replaced?")
+		sys.exit()
+	# replace in genotype
+	for i in vcf_colnums:
+		vcf_line[i] = vcf_line[i].replace(old_al_index, new_al_index)
+	# update REF or ALT
+	new_al = vcf_line[4].split(",")[int(old_al_index)-1]
+	if new_al_index == "1":
+		vcf_line[4] = new_al # ALT
+	elif new_al_index == "0":
+		vcf_line[3] = new_al # REF
+		# Dont update ALT here, to keep order for a second replacement!
+		# (ALT -> REF will often have a following step, e.g. 1/3 -> 0/3 -> 0/1
+	else:
+		sys.stderr.write("New index must be 0 or 1: REF or one and only ALT")
+		sys.exit()
+	return None
+
+''' test
+line = ['21','148','.','C','A,T,G','0','.','.','GT','0/2','1/1','./0','2/.']
+# nothing changes, C stays REF
+change_alt_index(line, [9,10,11,12], "0", "0")
+line == ['21','148','.','C','A,T,G','0','.','.','GT','0/2','1/1','./0','2/.']
+# only update ALT, A stays first ALT
+change_alt_index(line, [9,10,11,12], "1", "1")
+line == ['21','148','.','C','A','0','.','.','GT','0/2','1/1','./0','2/.']
+# T becomes only ALT in cols 9+11
+line = ['21','148','.','C','A,T,G','0','.','.','GT','0/2','1/1','./0','2/.']
+change_alt_index(line, [9, 11], "2", "1")
+line == ['21', '148', '.', 'C', 'T', '0', '.', '.', 'GT', '0/1', '1/1', './0', '2/.']
+# A becomes REF
+line = ['21','148','.','C','A,T,G','0','.','.','GT','1|.','1|3']
+change_alt_index(line, [9, 10], "1", "0")
+line == ['21','148','.','A','A,T,G','0','.','.','GT','0|.','0|3']
+# G becomes REF
+line = ['21','148','.','C','A,T,G','0','.','.','GT','1|.','1|3']
+change_alt_index(line, [9, 10], "3", "0")
+line == ['21','148','.','G','A,T,G','0','.','.','GT','1|.','1|0']
+
+'''
+
+
+
+def check_bial(vcf_line, pop_cols, non_pop_cols):
+	'''
+	check if a vcf-line is biallelic across	samples from pop_colnums ({pop:[col,nums,...]})
+	return a modified line with one ALT-allele and {0,1} GT in input samples
+	return None if its not bialleleic across samples
+	(if line gets changed all non-input-samples become masked './.',
+	 this not necessary here but would be very ugly if they stay unchanged)
+	'''
+	alt = vcf_line[4]
+	# just to make sure
+	if alt == ".":
+		return None
+	# unique allele-indices for input pops
+	unique_allele_indis = unique_variants(vcf_line, pop_cols)
+	if len(unique_allele_indis) != 2:
+		return None
+	if len(alt) == 1:
+		return vcf_line # not check earlier because it could still be invariable across samples
+	
+	## update allele indices for input samples
+	out = vcf_line[:]
+	# replace REF first, then make the other ALT allele the one and only one
+	# e.g. 1/3 -> 0/3 -> 0/1;  (unique alleles are sorted)
+	change_alt_index(out, pop_cols, unique_allele_indis[0], "0")
+	change_alt_index(out, pop_cols, unique_allele_indis[1], "1")
+	# mask all other samples
+	for i in non_pop_cols:
+		out[i] = "./."
+	
+	return out
+
+''' test
+line = ['21','148','.','C','A,T,G','0','.','.','GT','0/2','1/1','./0','./.','1|.','1|3']
+p1, np1 = [9, 10], [11,12,13,14] # trial
+p2, np2  = [10,11,12,13], [9,14] # bial 1st allele
+p3, np3 = [9,11], [10,12,13,14] # bial 2nd allele
+p4, np4 = [10,12,13,14], [9,11] # bial 1st and 3rd alleles (modify REF!)
+
+check_bial(line, p1, np1) == None
+check_bial(line, p2, np2) == ['21','148','.','C','A','0','.','.','GT','./.','1/1','./0','./.','1|.','./.']
+check_bial(line, p3, np3) == ['21','148','.','C','T','0','.','.','GT','0/1','./.','./0','./.','./.','./.']
+check_bial(line, p4, np4) == ['21','148','.','A','G','0','.','.','GT','./.','0/0','./.','./.','0|.','0|1']
+
+'''
+
+
+
+# TODO: SGDP male X-genotypes: {'./.': 26296303, '1/1': 9501692, '0/1': 211789, '0/0': 164360584}
 #       how to distinguish between recombining and non-recombining (ask Cee?)
 #       1000 genomes has {'1': 116179771, '0': 3914561345, '1|0': 3093771, '0|1': 3151250,
 #       '1|1':      3558260, '0|0': 122262116}
