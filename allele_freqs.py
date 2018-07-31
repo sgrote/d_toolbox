@@ -60,8 +60,6 @@ def allele_freqs(vcf, pop_colnums, pops, transver=False, accu_bial=False):
 	for line in vcf:
 		try:
 			line = line.rstrip().split()
-			## bases/genotypes
-			ref = line[3]
 			## skip invariable
 			if line[4] == ".":
 				continue
@@ -75,9 +73,11 @@ def allele_freqs(vcf, pop_colnums, pops, transver=False, accu_bial=False):
 					continue
 			
 			## check REF and ALT
+			## bases/genotypes
+			ref = line[3]
+			alt = line[4]
 			if ref not in ["A","C","T","G"]:
 				continue
-			alt = line[4]
 			if alt not in ["A","C","T","G"]:
 				continue
 			if transver: 
