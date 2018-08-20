@@ -297,7 +297,7 @@ def change_alt_index(vcf_line, vcf_colnums, old_al_index, new_al_index):
 		if new_al_index == "0":
 			return None
 		if new_al_index == "1":
-			vcf_line[4] = vcf_line[4][0]
+			vcf_line[4] = vcf_line[4].split(",")[0]
 			return None
 	if old_al_index == "0":
 		sys.stderr.write("Why would a REF-allele be replaced?")
@@ -338,6 +338,12 @@ line == ['21','148','.','A','A,T,G','0','.','.','GT','0|.','0|3']
 line = ['21','148','.','C','A,T,G','0','.','.','GT','1|.','1|3']
 change_alt_index(line, [9, 10], "3", "0")
 line == ['21','148','.','G','A,T,G','0','.','.','GT','1|.','1|0']
+# ALT is insertion
+line = ['21','148','.','C','ATG','0','.','.','GT','1|.','1|0']
+change_alt_index(line, [9, 10], "0", "0")
+line == ['21','148','.','C','ATG','0','.','.','GT','1|.','1|0']
+change_alt_index(line, [9, 10], "1", "1")
+line == ['21','148','.','C','ATG','0','.','.','GT','1|.','1|0']
 
 '''
 
