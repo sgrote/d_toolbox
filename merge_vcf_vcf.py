@@ -20,7 +20,7 @@ import vcf_line_filter as F
 ### helper
 
 # If only one line is present or passes line-filter
-def filter_and_fill(line1, n_donors2, filter1=None, filter_ind1=None, gt_only=False, fill2=False, var=None, keep_miss=None):
+def filter_and_fill(line1, n_donors2, filter1=None, filter_ind1=None, gt_only=False, fill2=False, gt_sep="/", var=None, keep_miss=None):
 	''' 
 	Filter line1 with condition string, if pass also filter individual genotypes and create ./. or 0/0 genotypes for line2. Also remove QUAL, FILTER and INFO
 	Out: (filtered_line1, filled_gt2) or (None, None) if filter not passed
@@ -30,13 +30,13 @@ def filter_and_fill(line1, n_donors2, filter1=None, filter_ind1=None, gt_only=Fa
 		return None, None
 	# create genotypes for line2:
 	if fill2:
-		gt2 = ['0/0'] * n_donors2
+		gt2 = ['0' + gt_sep + '0'] * n_donors2
 	else:
-		gt2 = ['./.'] * n_donors2
+		gt2 = ['.' + gt_sep + '.'] * n_donors2
 	# filter line1
 	if filter1 and not F.filter_line(filter1, line1):
 		if keep_miss:
-			out_line = line1[:5] + [".",".",".","GT"] + ["./."] * (len(line1)-9)
+			out_line = line1[:5] + [".",".",".","GT"] + ['.' + gt_sep + '.'] * (len(line1)-9)
 			return out_line, gt2
 		else:
 			return None, None
@@ -54,7 +54,7 @@ line1 = ['21','148','.','C','T','10','LowQual', 'AC=27;AN=558;AF=a_string','GT:G
 line_clean = ['21','148','.','C','T','.','.','.','GT:GF','0/1:-1','0/0:3','./0:-1']
 filter_and_fill(line1, 2) == (line_clean, ['./.', './.'])
 filter_and_fill(line1, 2, "QUAL > 9") == (line_clean, ['./.', './.'])
-filter_and_fill(line1, 3, "QUAL > 9", fill2=True) == (line_clean, ['0/0', '0/0', '0/0'])
+filter_and_fill(line1, 3, "QUAL > 9", fill2=True, gt_sep="|") == (line_clean, ['0|0', '0|0', '0|0'])
 filter_and_fill(line1, 3, "QUAL > 10", fill2=True) == (None, None)
 filter_and_fill(line1, 2, "QUAL > 9 and FILTER == 'LowQual'") == (line_clean, ['./.', './.'])
 filter_and_fill(line1, 2, "QUAL > 9 and FILTER != 'LowQual'") == (None, None)
@@ -113,6 +113,8 @@ def main():
 	parser.add_argument("--gt_only", action="store_true", help="Restrict to genotypes in sample columns")
 	parser.add_argument("--fill1", action="store_true", help="Fill vcf1 with REF 0/0 for missing positions, else ./.")
 	parser.add_argument("--fill2", action="store_true", help="Like --fill1 for vcf2")
+	parser.add_argument("--gt_sep1", default="/", choices=["/","|"], help="Seperator for filled in genotypes for vcf1 (either / or |)")
+	parser.add_argument("--gt_sep2", default="/", choices=["/","|"], help="Like --gt_sep1 for vcf2")
 	parser.add_argument("--require1", action="store_true", help="Restrict to positions present in vcf1")
 	parser.add_argument("--require2", action="store_true", help="Restrict to positions present in vcf2")
 	parser.add_argument("--keep_miss", action="store_true", help="Keep lines that were filtered out as missing data ./.")
@@ -180,14 +182,14 @@ def main():
 				# -> if v2 not required and v1 passes filter: add v2 0/0 or ./. GTs and read next v1 line
 				if (len(v2) == 0) or (len(v1) != 0 and int(v1[1]) < int(v2[1])):
 					if not args.require2:
-						v1, gt2 = filter_and_fill(v1, n_v2, args.filter1, args.filter_ind1, args.gt_only, args.fill2, args.var, args.keep_miss)
+						v1, gt2 = filter_and_fill(v1, n_v2, args.filter1, args.filter_ind1, args.gt_only, args.fill2, args.gt_sep2, args.var, args.keep_miss)
 						if v1:
 							out = v1 + gt2
 					v1 = vcf_1.readline().split()
 				## pos not v1
 				elif (len(v1) == 0) or (len(v2) != 0 and int(v2[1]) < int(v1[1])):
 					if not args.require1:
-						v2, gt1 = filter_and_fill(v2, n_v1, args.filter2, args.filter_ind2, args.gt_only, args.fill1, args.var, args.keep_miss)
+						v2, gt1 = filter_and_fill(v2, n_v1, args.filter2, args.filter_ind2, args.gt_only, args.fill1, args.gt_sep1, args.var, args.keep_miss)
 						if v2:
 							out = v2[:9] + gt1 + v2[9:]
 					v2 = vcf_2.readline().split()
@@ -199,11 +201,11 @@ def main():
 						v2_pass = F.check_filter(v2, args.filter2)
 						if v1_pass and not v2_pass:
 							# fill2=False because v2 did not pass filter and should be ./. and not 0/0
-							v1, gt2 = filter_and_fill(v1, n_v2, None, args.filter_ind1, args.gt_only, False, args.var, args.keep_miss)
+							v1, gt2 = filter_and_fill(v1, n_v2, None, args.filter_ind1, args.gt_only, False, args.gt_sep2, args.var, args.keep_miss)
 							if v1: # could fail despite v1_pass when individual GTs don't pass or invariable
 								out = v1 + gt2
 						elif v2_pass and not v1_pass:
-							v2, gt1 = filter_and_fill(v2, n_v1, None, args.filter_ind2, args.gt_only, False, args.var, args.keep_miss)
+							v2, gt1 = filter_and_fill(v2, n_v1, None, args.filter_ind2, args.gt_only, False, args.gt_sep1, args.var, args.keep_miss)
 							if v2:
 								out = v2[:9] + gt1 + v2[9:]
 						# both pass line-filter: merge, filter individual genotypes and check var again

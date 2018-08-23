@@ -189,7 +189,7 @@ get_gt_dict(["0/1","-1"], ["GT","GF"])
 
 
 # replace a vcf-line with filtered individual genotypes
-def filter_genotypes(filter_string, vcf_line, gt_only=False):
+def filter_genotypes(filter_string, vcf_line, gt_only=False, gt_sep="/"):
 	'''
 	in: filter_string, e.g. GF >= 0 or GT == './0'
 	    vcf_line as list of strings
@@ -208,7 +208,7 @@ def filter_genotypes(filter_string, vcf_line, gt_only=False):
 		gt_dict = get_gt_dict(gt_parts, key_pos)
 		gt_pass = eval(condition_string)
 		if not gt_pass:
-			gt_parts[gt_pos] = "./."
+			gt_parts[gt_pos] = "." + gt_sep + "."
 			out_line[i] = ":".join(gt_parts)
 		if gt_only:
 			out_line[i] = gt_parts[gt_pos]
@@ -222,7 +222,7 @@ filter_genotypes("GF > 0", vcf_line, True) == ['21', '148', '.', 'C', 'T', '0', 
 vcf_line2 = ['21','148','.','C','T','0','.','.','ST:GT:GF','P:0/1:-1','Q:0/1:3','P:./0:-1']
 filter_genotypes("ST == 'P'", vcf_line2, True) == ['21', '148', '.', 'C', 'T', '0', '.', '.', 'GT', '0/1', './.', './0']
 filter_genotypes("ST == 'Q' or GT == './0'", vcf_line2, True) == ['21', '148', '.', 'C', 'T', '0', '.', '.', 'GT', './.', '0/1', './0']
-filter_genotypes("GF > 2 or GT == './0'", vcf_line2) == ['21', '148', '.', 'C', 'T', '0', '.', '.', 'ST:GT:GF', 'P:./.:-1', 'Q:0/1:3', 'P:./0:-1']
+filter_genotypes("GF > 2 or GT == './0'", vcf_line2, gt_sep="|") == ['21', '148', '.', 'C', 'T', '0', '.', '.', 'ST:GT:GF', 'P:.|.:-1', 'Q:0/1:3', 'P:./0:-1']
 '''
 
 
@@ -259,10 +259,10 @@ def check_filter(vcf_line, filter_string=None):
 		return True
 
 
-def filter_gt(vcf_line, filter_ind=None, gt_only=False):
+def filter_gt(vcf_line, filter_ind=None, gt_only=False, gt_sep="/"):
 	''' filter individual genotypes if specified, else return the input '''
 	if filter_ind:
-		out_line = filter_genotypes(filter_ind, vcf_line, gt_only) # this does gt_only on the fly
+		out_line = filter_genotypes(filter_ind, vcf_line, gt_only, gt_sep) # this does gt_only on the fly
 	elif gt_only:
 		out_line = genotypes_only(vcf_line)
 	else:
@@ -274,6 +274,7 @@ vcf_line = ['21','148','.','C','T','0','.','.','GT:GF','0/1:-1','0/1:3','./0:-1'
 filter_gt(vcf_line) == vcf_line
 filter_gt(vcf_line, gt_only=True) == vcf_line[:8] + ['GT','0/1','0/1','./0']
 filter_gt(vcf_line, filter_ind="GF >= 0", gt_only=True) == vcf_line[:8] + ['GT','./.','0/1','./.']
+filter_gt(vcf_line, filter_ind="GF >= 0", gt_only=True, gt_sep="|") == vcf_line[:8] + ['GT','.|.','0/1','.|.']
 '''
 
 
@@ -304,7 +305,7 @@ check_gt(['21','148','.','C','T,A,G','0','.','.','GT','./.','.|.','./3'], var=Tr
 
 
 # If only one line is present or passes line-filter
-def combi_filter(line1, filter1=None, filter_ind1=None, gt_only=False, var=False, keep_miss=False):
+def combi_filter(line1, filter1=None, filter_ind1=None, gt_only=False, var=False, keep_miss=False, gt_sep="/"):
 	'''
 	Combine filter_line and filter_genotypes, also check for var, optionally reduce sample-info to genotypes
 	Out: filtered_line1; if filters not passed: None or missing-data; if not var: None
@@ -316,12 +317,12 @@ def combi_filter(line1, filter1=None, filter_ind1=None, gt_only=False, var=False
 	# filter line1
 	if filter1 and not filter_line(filter1, line1):
 		if keep_miss:
-			out_line = line1[:8] + ["GT"] + ["./."] * (len(line1)-9)
+			out_line = line1[:8] + ["GT"] + ["." + gt_sep + "."] * (len(line1)-9)
 			return out_line
 		else:
 			return None
 	# filter line1 genotypes
-	out_line = filter_gt(line1, filter_ind1, gt_only)
+	out_line = filter_gt(line1, filter_ind1, gt_only, gt_sep)
 	# check if any of the (ALT)-alleles is left after gt-filterig
 	if not keep_miss and not check_gt(out_line, var):
 		return None
@@ -335,10 +336,11 @@ combi_filter(line1,"QUAL > 10") == None
 combi_filter(line1,"QUAL > 9 and FILTER == 'LowQual'") == line1
 combi_filter(line1,"QUAL > 9 and FILTER != 'LowQual'") == None
 combi_filter(line1,"QUAL > 9 and FILTER != 'LowQual'", keep_miss=True) == line1[:8]+['GT','./.','./.','./.']
+combi_filter(line1,"FILTER != 'LowQual'", keep_miss=True, gt_sep="|") == line1[:8]+['GT','.|.','.|.','.|.']
 combi_filter(line1,"AN > 500 or AC > 30") == line1
 combi_filter(line1,"AN > 500 and AC > 30") == None
 combi_filter(line1,"AN > 500", gt_only=True) == line1[:8]+['GT','0/1','0/0','./0']
-combi_filter(line1,"QUAL > 0", "GF >= 0") == line1[:9]+['./.:-1','0/0:3','./.:-1']
+combi_filter(line1,"QUAL > 0", "GF >= 0", gt_sep="|") == line1[:9]+['.|.:-1','0/0:3','.|.:-1']
 combi_filter(line1,"QUAL > 0", "GF >= 0", var=True) == None
 combi_filter(line1,"QUAL > 0", "GF >= 0", var=True, keep_miss=True) == line1[:9]+['./.:-1','0/0:3','./.:-1']
 combi_filter(line1,filter_ind1="GF > 3", gt_only=True) == None
