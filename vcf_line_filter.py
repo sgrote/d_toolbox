@@ -262,7 +262,7 @@ def check_filter(vcf_line, filter_string=None):
 def filter_gt(vcf_line, filter_ind=None, gt_only=False, gt_sep="/"):
 	''' filter individual genotypes if specified, else return the input '''
 	if filter_ind:
-		vcf_line = filter_genotypes(filter_ind, vcf_line, gt_only) # this does gt_only on the fly
+		vcf_line = filter_genotypes(filter_ind, vcf_line, gt_only, gt_sep) # this does gt_only on the fly
 	elif gt_only:
 		vcf_line = genotypes_only(vcf_line)
 	return vcf_line
@@ -322,7 +322,7 @@ def combi_filter(line1, filter1=None, filter_ind1=None, gt_only=False, var=False
 	# filter line1 genotypes
 	out_line = filter_gt(line1, filter_ind1, gt_only, gt_sep)
 	# check if any of the (ALT)-alleles is left after gt-filterig
-	if not keep_miss and not check_gt(out_line, var):
+	if filter_ind1 and not keep_miss and not check_gt(out_line, var):
 		return None
 	# full line with modified genotypes
 	return out_line
