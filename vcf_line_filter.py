@@ -262,12 +262,10 @@ def check_filter(vcf_line, filter_string=None):
 def filter_gt(vcf_line, filter_ind=None, gt_only=False, gt_sep="/"):
 	''' filter individual genotypes if specified, else return the input '''
 	if filter_ind:
-		out_line = filter_genotypes(filter_ind, vcf_line, gt_only, gt_sep) # this does gt_only on the fly
+		vcf_line = filter_genotypes(filter_ind, vcf_line, gt_only) # this does gt_only on the fly
 	elif gt_only:
-		out_line = genotypes_only(vcf_line)
-	else:
-		out_line = vcf_line[:]
-	return out_line
+		vcf_line = genotypes_only(vcf_line)
+	return vcf_line
 
 ''' test
 vcf_line = ['21','148','.','C','T','0','.','.','GT:GF','0/1:-1','0/1:3','./0:-1']

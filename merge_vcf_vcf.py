@@ -50,25 +50,43 @@ def filter_and_fill(line1, n_donors2, filter1=None, filter_ind1=None, gt_only=Fa
 	return out_line, gt2
 
 ''' test
-line1 = ['21','148','.','C','T','10','LowQual', 'AC=27;AN=558;AF=a_string','GT:GF','0/1:-1','0/0:3','./0:-1']
+line = ['21','148','.','C','T','10','LowQual', 'AC=27;AN=558;AF=a_string','GT:GF','0/1:-1','0/0:3','./0:-1']
+line1 = line[:]
 line_clean = ['21','148','.','C','T','.','.','.','GT:GF','0/1:-1','0/0:3','./0:-1']
 filter_and_fill(line1, 2) == (line_clean, ['./.', './.'])
+line1 = line[:]
 filter_and_fill(line1, 2, "QUAL > 9") == (line_clean, ['./.', './.'])
+line1 = line[:]
 filter_and_fill(line1, 3, "QUAL > 9", fill2=True, gt_sep="|") == (line_clean, ['0|0', '0|0', '0|0'])
+line1 = line[:]
 filter_and_fill(line1, 3, "QUAL > 10", fill2=True) == (None, None)
+line1 = line[:]
 filter_and_fill(line1, 2, "QUAL > 9 and FILTER == 'LowQual'") == (line_clean, ['./.', './.'])
+line1 = line[:]
 filter_and_fill(line1, 2, "QUAL > 9 and FILTER != 'LowQual'") == (None, None)
+line1 = line[:]
 filter_and_fill(line1, 2, "AN > 500 or AC > 30") == (line_clean, ['./.', './.'])
+line1 = line[:]
 filter_and_fill(line1, 2, "AN > 500 and AC > 30") == (None, None)
+line1 = line[:]
 filter_and_fill(line1, 1, "AN > 500", gt_only=True) == (line_clean[:8]+['GT','0/1','0/0','./0'], ['./.'])
+line1 = line[:]
 filter_and_fill(line1, 2, "QUAL > 0", "GF >= 0") == (line_clean[:9]+['./.:-1','0/0:3','./.:-1'], ['./.', './.'])
+line1 = line[:]
 filter_and_fill(line1, 1, "QUAL > 0", "GF >= 0", gt_only=True) == (line_clean[:8] + ['GT','./.','0/0','./.'],['./.'])
+line1 = line[:]
 filter_and_fill(line1, 1, "QUAL > 0", "GF >= 0", gt_only=True, var=True) == (None, None)
+line1 = line[:]
 filter_and_fill(line1, 1, "QUAL > 0", "GF >= 0", gt_only=True, var=True, keep_miss=True) == (line_clean[:8] + ['GT','./.','0/0','./.'],['./.'])
+line1 = line[:]
 filter_and_fill(line1, 1, filter_ind1="GF > 3", gt_only=True) == (None, None)
+line1 = line[:]
 filter_and_fill(line1, 1, filter_ind1="GF > 3", gt_only=True, keep_miss=True) == (line_clean[:8]+['GT','./.','./.','./.'], ['./.'])
+line1 = line[:]
 filter_and_fill(line1, 1, filter_ind1="GF > 3", gt_only=True, keep_miss=True, fill2=True) == (line_clean[:8]+['GT','./.','./.','./.'], ['0/0'])
+line1 = line[:]
 filter_and_fill(['21','148','.','C','.','10','.', '.','GT:GF','0/0:-1'],2,var=True) == (None, None)
+line1 = line[:]
 filter_and_fill(['21','148','.','C','.','10','.', '.','GT:GF','0/0:-1'],2,var=True, keep_miss=True) == (None, None)
 
 '''
