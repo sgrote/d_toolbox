@@ -6,12 +6,6 @@ filtering for lines and individual genotypes with condition-string.
 Header and QUAL, FILTER, INFO are kept, FORMAT is kept or "GT" if gt_only.
 Writes to STDOUT
 
-
-generate test-file
-cd ~/Test
-CTEAM=/mnt/sequencedb/gendivdata/2_genotypes/human/SGDP/SGDP_v3_May2016/combined_vcf/c_team_chr21.vcf.gz
-zcat $CTEAM | head -n 10000 | cut -f -50 | awk '$6<1 {$7="LowQual"}; $6>100 {$7="PASS"}  1' OFS="\t" > test_lines_SGDP
-
 '''
 
 import argparse
@@ -19,7 +13,7 @@ import sys
 
 import vcf_line_filter as F
 
-# TODO: add transver option (should that include biallelelic?)
+# TODO: add transver option (requiring biallelelic)
 # TODO: add biallelix SNP option
 
 def main():
@@ -57,7 +51,6 @@ def main():
 		## for every line: check if line passes and filter on individual genotypes
 		try:
 			# returns (modified) line if it passes filter, if not None or all ./. line (if keep_miss)
-			# TODO: this can also be used with other files, combi filter returns the same line as input if no filter strings are used, but if not keep_miss (default) and 'var' then lines will be checked for presence of ALT-allele (but the way this done (check if anything is not in the 'no gt, only ref' failset would pass, so also allele-freqs). still time could be saved with keep_miss=TRUE for allele freq input)
 			out = F.combi_filter(v, filter1=args.filter, filter_ind1=args.filter_ind, gt_only=args.gt_only, var=args.var, keep_miss=args.keep_miss)
 			if out:
 				sys.stdout.write("\t".join(out) + "\n")
@@ -76,7 +69,7 @@ VCF=/mnt/sequencedb/gendivdata/2_genotypes/human/SGDP/SGDP_v3_May2016/combined_v
 FILTER=/mnt/expressions/steffi/D/d_toolbox/vcf_filter.py
 zcat $VCF | $FILTER --filter "QUAL > 0" | less -S
 zcat $VCF | $FILTER --filter "QUAL > 0" --keep_miss | less -S
-zcat $VCF | $FILTER --filter "QUAL > 0" --filter_ind "GF >= 0" | less -S
+zcat $VCF | $FILTER --filter "QUAL > 0" --filter_ind "GF >= 1" | less -S
 zcat $VCF | $FILTER --filter_ind "GF >= 0" | less -S
 # keep only lines where ALT allele is present after filtering individual genotypes
 zcat $VCF | $FILTER --filter_ind "GF >= 0" --var | less -S
