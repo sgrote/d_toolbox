@@ -43,7 +43,7 @@ def filter_and_fill(line1, n_donors2, filter1=None, filter_ind1=None, gt_only=Fa
 	# filter line1 genotypes
 	out_line = F.filter_gt(line1, filter_ind1, gt_only)
 	# check if any of the (ALT)-alleles is left after gt-filterig
-	if not keep_miss and not F.check_gt(out_line, var):
+	if filter_ind1 and not keep_miss and not F.check_gt(out_line, var):
 		return None, None
 	# remove QUAL FILTER INFO for merged line
 	out_line[5:8] = [".",".","."]
