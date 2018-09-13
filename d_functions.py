@@ -401,7 +401,7 @@ check_bial(line, p4, np4) == ['21','148','.','A','G','0','.','.','GT','./.','0/0
 #       1000 genomes has {'1': 116179771, '0': 3914561345, '1|0': 3093771, '0|1': 3151250,
 #       '1|1':      3558260, '0|0': 122262116}
 
-def get_p(vcf_line, pop):
+def get_p(vcf_line, pop, digits=None):
 	'''
 	alternative allele-freqs for one population for one biallelic site
 	in: vcf = vcf-line as list
@@ -440,6 +440,9 @@ def get_p(vcf_line, pop):
 		return None   # unknown sites may be fully genotyped invariable sites, here there is simply no GT 
 	else: 
 		daf = ac*1.0 / sum_alleles
+	# round
+	if digits:
+		daf = round(daf, digits)
 	return daf
 
 ''' test
@@ -449,10 +452,12 @@ vcf_line2 = ['X','148','.','C','T','0','.','.','GT','1/1','1','./0','./.','1|.',
 get_p(vcf_line1, [9,10]) == 0.75
 get_p(vcf_line1, [9,10,11]) == 3.0/5
 get_p(vcf_line1, [9,10,11,14,15]) == 5.0/7
+get_p(vcf_line1, [9,10,11,14,15], digits=4) == 0.7143
 get_p(vcf_line1, [12,13,14,15]) == 1
 get_p(vcf_line2, [9,10]) == 1
 get_p(vcf_line2, [9,11]) == 2.0/3
 get_p(vcf_line2, [9,14]) == 0.75
+get_p(vcf_line2, [9,14], digits=1) == 0.7
 get_p(vcf_line2, [10,14]) == 2.0/3
 get_p(vcf_line2, [9,10,11,12]) == 0.75
 get_p(vcf_line2, [9,10,11,12,13]) == 0.8
@@ -532,7 +537,7 @@ def abba_block_sums(vcf, pop_colnums, pw_pops, block_size, centro_range=None, tr
 			blocksites = 0
 			block_count += 1
 			print("starting block ", block_count+1, "until position", block_end)
-
+		
 		## get alternative allele freqs for input populations
 		p = {}
 		## if allele-freq-input: get_p directly from file with pop_columns[pop]
@@ -550,7 +555,7 @@ def abba_block_sums(vcf, pop_colnums, pw_pops, block_size, centro_range=None, tr
 		if pset.issubset({0,None}) or pset.issubset({1,None}):
 			#print("Uninformative site:", pset) 
 			continue
-
+		
 		## compute p(ABBA) and p(BABA)  
 		abba = []
 		baba = []

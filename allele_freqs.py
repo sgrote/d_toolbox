@@ -23,6 +23,7 @@ def main():
 	# optional
 	parser.add_argument("-t", "--transver", action="store_true", help="Transversions only.")
 	parser.add_argument("-a", "--accu_bial", action="store_true", help="Accurately check for biallelic sites among input pops, other samples can have a third state. (default is checking the ALT-field only).")
+	parser.add_argument("-d", "--digits", type=int, help="Round allele frequencies to -d digits.")
 
 	args = parser.parse_args()
 
@@ -45,12 +46,12 @@ def main():
 	
 
 	# Compute allele freqs and write to stdout
-	allele_freqs(vcf, pop_colnums, pops, args.transver, args.accu_bial)
+	allele_freqs(vcf, pop_colnums, pops, args.transver, args.accu_bial, args.digits)
 
 
 
 # CAUTION this assumes pure genotype-input
-def allele_freqs(vcf, pop_colnums, pops, transver=False, accu_bial=False):
+def allele_freqs(vcf, pop_colnums, pops, transver=False, accu_bial=False, digits=None):
 	sys.stdout.write('\t'.join(["#CHROM","POS","ID","REF","ALT"] + list(pops)) + "\n")
 	line_count = 0
 	trans_county = 0
@@ -96,7 +97,7 @@ def allele_freqs(vcf, pop_colnums, pops, transver=False, accu_bial=False):
 			## get alternative allele freqs for input populations
 			freqs = []
 			for pop in pops:
-				freqs.append(D.get_p(line, pop_colnums[pop]))
+				freqs.append(D.get_p(line, pop_colnums[pop], digits))
 			
 			## double-check that not all pop-freqs are None (no genotypes in pop)
 			pset = set(freqs)
