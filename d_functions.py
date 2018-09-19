@@ -516,7 +516,7 @@ def abba_block_sums(vcf, pop_colnums, pw_pops, block_size, centro_range=None, tr
 		alt = line[4]
 		## reduce to biallelic 
 		# TODO: add fancy biallelic version that evaluates biallelic for pops of interest or even comps
-		if alt not in ["A","C","T","G"] and ref not in ["A","C","T","G"]:
+		if alt not in ["A","C","T","G"] or ref not in ["A","C","T","G"]:
 			#print("Skipping non-biallelic:", line[:7])
 			nbial_county += 1
 			continue
