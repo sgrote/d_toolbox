@@ -54,8 +54,8 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 		ymax = max((max(input$d + input$se)), 0)
 		ymin = min(min(input$d - input$se), 0)
 		span = ymax - ymin
-		ymax = ymax + abs(0.4*span)
-		ymin = ymin - abs(0.05*span)
+		ymax = ymax + abs(0.5*span)
+		ymin = ymin - abs(0.4*span)
 	}
 	
 	# cex xlab names (0.5-1)
