@@ -311,7 +311,6 @@ def combi_filter(line1, filter1=None, filter_ind1=None, gt_only=False, var=False
 	# skip invariable sites even when keep_miss
 	if var and line1[4] == ".":
 		return None
-	## TODO: add transver option
 	# filter line1
 	if filter1 and not filter_line(filter1, line1):
 		if keep_miss:

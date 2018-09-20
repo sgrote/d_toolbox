@@ -24,7 +24,6 @@ for (i in 1:length(chroms)){
 		setwd("../")
 		next
 	}
-	## TODO: only use sites file if one is present
 	sitesfile = FALSE
 	if ("sites" %in% dir()){
 		sitesfile = TRUE

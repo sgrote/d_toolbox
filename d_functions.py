@@ -212,7 +212,6 @@ def get_pop_colnumbers(info_file, vcf_header, pops):
 						pop_colnums[pop].append(i)
 			# add sex to col-number 
 			# (first entry of sample_info['sex'], since this column is all the same for one sample)
-			# TODO maybe code gender as 0/1, m/f
 			col_gender[i] = sample_info['sex'].iloc[0]
 	return pop_colnums, col_gender
 
@@ -497,8 +496,6 @@ def abba_block_sums(vcf, pop_colnums, pw_pops, block_size, centro_range=None, tr
 	first = True
 	for line in vcf:
 		line = line.rstrip().split()
-		# TODO: maybe require a pre-filtered file here and do all filtering in a separate script before
-		# 	    like zcat vcf | vcf_filter.py | d_stats.py 
 		# skip invariable sites
 		if line[4] == ".":
 			continue
@@ -515,7 +512,6 @@ def abba_block_sums(vcf, pop_colnums, pw_pops, block_size, centro_range=None, tr
 		ref = line[3]
 		alt = line[4]
 		## reduce to biallelic 
-		# TODO: add fancy biallelic version that evaluates biallelic for pops of interest or even comps
 		if alt not in ["A","C","T","G"] or ref not in ["A","C","T","G"]:
 			#print("Skipping non-biallelic:", line[:7])
 			nbial_county += 1

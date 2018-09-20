@@ -62,7 +62,7 @@ plot_sites = function(dtab, sub=""){
 	# replace NA with 0 (diagonal)
 	sqd[is.na(sqd)] = 0		
 	# add custom breaks to allow fixed limits 
-	limit = 8 # TODO: das wird hier noch nicht gebraucht da zu niedrig ==> aber code erstmal behalten
+	limit = 8 # das wird hier noch nicht gebraucht da zu niedrig ==> aber code erstmal behalten
 	if (max(sqd) > limit) limit = max(sqd)
 	breakys = seq(0, limit, len=101)
 	# titel und so

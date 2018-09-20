@@ -10,8 +10,6 @@ Usage: zcat vcf_with_bases.vcf.gz | base_to_gt.py "sampleA sampleB"
 import sys
 import argparse
 
-# TODO: check if header has strange characters - if file was not produced by bamSNPAddMaf it will have last 2 chars deleted from header
-# maybe TODO: allow bases to be in custom columns, not only in last ones
 
 ### helper
 def check_alts(alt, base):

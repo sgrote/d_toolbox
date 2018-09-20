@@ -13,7 +13,6 @@ import sys
 import d_functions as D
 
 # TODO: maybe add option to allow lines where allele is present at least x times inside the group
-# TODO: check if a line is really variable when ALT is defined (for now this can be assumed)
 
 def main():
 	parser = argparse.ArgumentParser(description='Filter one vcf file, from STDIN removing lines that are only variable due to alleles in a group of samples. Writes to STDOUT.', usage='zcat file1.vcf.gz | remove_group_singletons.py group_file')

@@ -3,7 +3,6 @@
 ''' 
 Add fake genotype from [chr,pos,base] file to vcf
 only for sites present in vcf (ok for use case 'add random-sampled base to archaics+invariable')
-(TODO: modify random sampling script to include REF base)
 
 '''
 	
@@ -81,8 +80,6 @@ def main():
 					new_alt, base_gt = B.convert_base(vcf[3], vcf[4], base[2])
 					if not (args.var and new_alt == "."):
 						# apply line-filter and genotype filter (replace non-passing genotypes with ./.)
-						# TODO: if ALT is filtered out, line is still printed despite var=True (egal...)
-						# (but can't GT-check merged line since FORMAT might differ)
 						filtered_vcf = F.combi_filter(vcf, args.filter1, args.filter_ind1, args.gt_only, False, True) # var=False since base might be only ALT; keep_miss=T -> never None
 						out = filtered_vcf[:4] + [new_alt] + filtered_vcf[5:] + [base_gt]
 					# read next lines from both files (also if not (vcf_pass or base_pass))

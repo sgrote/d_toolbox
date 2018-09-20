@@ -36,7 +36,7 @@ def main():
 		vcf = vcf_file.readline()
 	
 	## print position given pass-probability
-	while not len(vcf) == 0: # TODO: check if "while vcf" would also work
+	while not len(vcf) == 0:
 		rannum = random() # random float [0,1)
 		if rannum < args.prob:
 			 sys.stdout.write(vcf)

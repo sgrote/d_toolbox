@@ -188,7 +188,6 @@ def pw_diverge(vcf, pop_colnums, pops, transver=False, homo=False):
 			ref = line[3]
 			alt = line[4]
 			## reduce to biallelic or fixed REF
-			# TODO: make biallelic and/or variable optional)
 			if alt not in ["A","C","T","G","."] or ref not in ["A","C","T","G"]:
 				#print("Skipping non-biallelic:", line[:7])
 				nbial_county += 1
