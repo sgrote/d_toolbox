@@ -78,7 +78,7 @@ for (i in 1:length(chroms)){
 	    setwd("../")
 	    next
 	}
-	sites = suppressMessages(as.data.frame(read_tsv("sites")))
+	sites = suppressMessages(as.data.frame(read_tsv("sites", col_types=cols(.default="c"))))
 	if (ncol(sites) < 6){
 	    message("skipping ", chroms[i], ". sites file lacks columns (run d_stats.py with --sites 'full' option).")
 	    setwd("../")
