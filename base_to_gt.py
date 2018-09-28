@@ -83,18 +83,18 @@ convert_bases("A", "C,G", ["T","C",".","A","T"]) == ('C,G,T', ['3/3', '1/1', './
 def main():
 	parser = argparse.ArgumentParser(description='Take a vcf-file from stdin that has bases in LAST columns instead of genotype, convert bases to fake genotype, modify ALT if needed. Write to stdout. CAUTION:  use case: Kays BamSNPAddMaf was used to add ape-bases to vcf, so base-columns are assumed to have no sample-name in header. It also deletes last 2 chars in header lines to remove strange sign that is added by Kays script (visible with less-command).', usage='zcat vcf_with_bases.vcf.gz | base_to_gt.py "sampleA sampleB"')
 	parser.add_argument("new_names", help="names of samples with bases instead of genotypes, all in one string, ws-separated")
-
+	
 	args = parser.parse_args()
-
+	
 	if sys.stdin.isatty():
 		sys.exit("Error: Needs vcf from stdin, e.g. 'zcat vcf_with_bases.vcf.gz | base_to_gt.py | 'sampleA sampleB'")
 	instream = sys.stdin
-
+	
 	# how many columns with bases? convert new names to tab-separated string
 	args.new_names = args.new_names.split()
 	n = len(args.new_names)
 	args.new_names = "\t".join(args.new_names)
-
+	
 	# header
 	vcf = instream.readline()
 	while vcf[:6] != "#CHROM":
@@ -102,7 +102,7 @@ def main():
 		vcf = instream.readline()
 	last_header = vcf[:(-2)*n] + args.new_names + "\n"
 	sys.stdout.write(last_header)
-
+	
 	# body
 	for line in instream:
 		line = line.strip().split()
@@ -116,8 +116,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+	main()
 
-	
 
-	
