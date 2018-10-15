@@ -55,7 +55,7 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 		ymin = min(min(input$d - input$se), 0)
 		span = ymax - ymin
 		ymax = ymax + abs(0.5*span)
-		ymin = ymin - abs(0.4*span)
+		ymin = ymin - abs(0.2*span)
 	}
 	
 	# cex xlab names (0.5-1)
@@ -104,7 +104,8 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 	}
 	if (lege[2]){
 		# legend populations
-		legend("topright",cex=legcex,ncol=3,legend=unique(input$super),bty="n",fill=colors()[unique(input$color)],title="super populations")
+		super = unique(input[,c("super", "color")])
+		legend("topright",cex=legcex,ncol=3,legend=super$super,bty="n",fill=colors()[super$color],title="super populations")
 	}
 }
 
@@ -181,7 +182,7 @@ if (! interactive()){
 
 	## plot genomewide results
 	pdf(opt$outpdf, width=13)
-		par(cex.main=0.8, oma=c(2.5,0,0,0), cex.lab=1)
+		par(cex.main=0.8, oma=c(3.5,0,0,0), cex.lab=1)
 		if (opt$fixedy){
 			# compute y-axis range for plot_d_bars (in %)
 			out_d$se = out_d$d / out_d$z
