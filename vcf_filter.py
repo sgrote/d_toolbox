@@ -13,8 +13,6 @@ import sys
 
 import vcf_line_filter as F
 
-# TODO: add transver option (requiring biallelelic)
-# TODO: add biallelix SNP option
 
 def main():
 	parser = argparse.ArgumentParser(description='Filter one vcf file, from STDIN filtering for lines and individual genotypes with condition-string. Header and QUAL, FILTER, INFO are kept, FORMAT is kept or "GT" if gt_only. Writes to STDOUT.', usage='zcat file1.vcf.gz | vcf_filter.py --filter "QUAL > 3 and AC >= 10" --filter_ind "GF >= 1"')
@@ -23,6 +21,8 @@ def main():
 	parser.add_argument("--var", action="store_true", help="Restrict to variable sites")
 	parser.add_argument("--gt_only", action="store_true", help="Restrict to genotypes in sample columns")
 	parser.add_argument("--keep_miss", action="store_true", help="Keep lines that were filtered out as missing data ./.")
+	parser.add_argument("--bial", action="store_true", help="Restrict to biallelic sites")
+	parser.add_argument("--transver", action="store_true", help="Restrict to biallelic transversions")
 	
 	args = parser.parse_args()
 
@@ -48,7 +48,17 @@ def main():
 	
 		v = line.rstrip().split()
 		
-		## for every line: check if line passes and filter on individual genotypes
+		## general checks
+		ref = v[3]
+		alt = v[4]
+		if args.bial or args.transver:
+			if alt not in ["A","C","T","G"] or ref not in ["A","C","T","G"]:
+				continue
+		if args.transver: 
+			if ("A" in ref+alt and "G" in ref+alt) or ("C" in ref+alt and "T" in ref+alt):
+				continue
+		
+		## other filters
 		try:
 			# returns (modified) line if it passes filter, if not None or all ./. line (if keep_miss)
 			out = F.combi_filter(v, filter1=args.filter, filter_ind1=args.filter_ind, gt_only=args.gt_only, var=args.var, keep_miss=args.keep_miss)
@@ -67,6 +77,8 @@ if __name__ == "__main__":
 ''' test
 VCF=/mnt/sequencedb/gendivdata/2_genotypes/human/SGDP/SGDP_v3_May2016/combined_vcf/c_team_chr21.vcf.gz
 FILTER=/mnt/expressions/steffi/D/d_toolbox/vcf_filter.py
+zcat $VCF | $FILTER --bial | less -S
+zcat $VCF | $FILTER --transver | less -S
 zcat $VCF | $FILTER --filter "QUAL > 0" | less -S
 zcat $VCF | $FILTER --filter "QUAL > 0" --keep_miss | less -S
 zcat $VCF | $FILTER --filter "QUAL > 0" --filter_ind "GF >= 1" | less -S
