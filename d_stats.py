@@ -34,7 +34,7 @@ def main():
 	parser.add_argument("--chrom", help="chromosome number, e.g. '21', only needed if --centro is defined")
 	parser.add_argument("--min_p3", type=float, default=0, help="Minimum B-allele frequency in pop3. Only if outgroup is fixed (A).")
 	parser.add_argument("--max_p3", type=float, default=1, help="Maximum B-allele frequency in pop3. Only if outgroup is fixed (A).")
-
+	parser.add_argument("--bbba", action="store_true", help="In addition to ABBA and BABA, count BBBA and AABA per block.")
 
 	args = parser.parse_args()
 
@@ -75,12 +75,17 @@ def main():
 		pop_colnums, col_gender = D.get_pop_colnumbers(args.info, vcf_header, pops)
 
 	# compute blockwise ABBA  [ [[abba][baba]] [[abba][baba]] ...]
-	blocks, sites_comp = D.abba_block_sums(vcf, pop_colnums, pw_pops, args.blocksize, centro_range, args.transver, args.sitesfile, args.afinput, args.min_p3, args.max_p3)
+	blocks, sites_comp = D.abba_block_sums(vcf, pop_colnums, pw_pops, args.blocksize, centro_range, args.transver, args.sitesfile, args.afinput, args.min_p3, args.max_p3, args.bbba)
 
 	# rearrange output and print to file [[pop1][pop2][pop3][block][abba][baba]]
-	blocks_out = D.rearrange_blocks(pw_pops, blocks)
-	with open("out_blocks","w") as out:
-		out.write('\t'.join(["pop1","pop2","pop3","pop4","block","abba","baba"])+"\n")
+	if args.bbba:
+		blocks_out = D.rearrange_blocks_bbba(pw_pops, blocks)
+		with open("out_blocks","w") as out:
+			out.write('\t'.join(["pop1","pop2","pop3","pop4","block","abba","baba","bbba","aaba"])+"\n")
+	else:
+		blocks_out = D.rearrange_blocks(pw_pops, blocks)
+		with open("out_blocks","w") as out:
+			out.write('\t'.join(["pop1","pop2","pop3","pop4","block","abba","baba"])+"\n")
 	D.print_table_to_file(blocks_out, "out_blocks", mode="a")
 
 	# print sites per comparison to file
