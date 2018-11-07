@@ -395,11 +395,6 @@ check_bial(line, p4, np4) == ['21','148','.','A','G','0','.','.','GT','./.','0/0
 
 
 
-# TODO: SGDP male X-genotypes: {'./.': 26296303, '1/1': 9501692, '0/1': 211789, '0/0': 164360584}
-#       how to distinguish between recombining and non-recombining (ask Cee?)
-#       1000 genomes has {'1': 116179771, '0': 3914561345, '1|0': 3093771, '0|1': 3151250,
-#       '1|1':      3558260, '0|0': 122262116}
-
 def get_p(vcf_line, pop, digits=None):
 	'''
 	alternative allele-freqs for one population for one biallelic site
