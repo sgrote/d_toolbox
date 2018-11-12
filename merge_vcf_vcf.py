@@ -142,7 +142,7 @@ def main():
 	parser.add_argument("--filter_ind2", help="Like --filter_ind1 for vcf2")
 	parser.add_argument("--header", choices=["vcf1", "vcf2"], help="optional: take the header from vcf1 or vcf2. If not specified a minimal standard header is added.")
 	parser.add_argument("--accu_alt", action="store_true", help="Check that all ALT alleles are really present in data, if not remove base from ALT and update numbers in genotypes")
-
+	parser.add_argument("--names2", help="comma-separated string of new sample names for vcf2")
 	
 	args = parser.parse_args()
 
@@ -164,7 +164,13 @@ def main():
 			if args.header=="vcf2":
 				sys.stdout.write(v2)
 			v2 = vcf_2.readline()
-		v2_donors = v2.rstrip().split()[9:]	
+		if args.names2:
+			v2_donors = args.names2.split(",")
+			if len(v2_donors) != len(v2.rstrip().split()[9:]):
+				sys.exit("--names2 does not match number of samples.")
+		else:
+			v2_donors = v2.rstrip().split()[9:]
+		
 		
 		# vcf_1 header, keep line with donor-ids
 		v1 = vcf_1.readline()
