@@ -20,7 +20,7 @@ import d_functions as D
 # list of AAAA, BAAA, ABAA counts per pw_pop [pattern, pw_pop]
 # [ [AAAA], [BAAA_tv], [ABAA_tv], [BAAA_ti], [ABAA_ti] ]
 # CUATION this assumes pure genotype-input
-def count_patterns(vcf, pop_colnums, pw_pops):
+def count_patterns(vcf, pop_colnums, pw_pops, transver=False):
 	pops = set(pw_pops[0]+pw_pops[1]+pw_pops[2]+pw_pops[3])
 	n_comp = len(pw_pops[0])
 	nbial_county = 0
@@ -53,6 +53,8 @@ def count_patterns(vcf, pop_colnums, pw_pops):
 		## is it a transition?
 		transi = False
 		if ("A" in ref+alt and "G" in ref+alt) or ("C" in ref+alt and "T" in ref+alt):
+			if transver:
+				continue
 			transi = True
 
 		## is it AAAA, BAAA, ABAA?  
@@ -104,6 +106,7 @@ def main():
 	# or a csv-file:
 	parser.add_argument("--pwpops", help="csv-file with 4 columns named pop1, pop2, pop3, pop4. This is an alternative input to pop1-pop4 and implies --fixedpairs. Additional columns don't matter.")
 	parser.add_argument("-i", "--info", help="mandatory for vcf-input: csv-file with population metadata for pop1-pop4 (might contain more pops). Needs columns [sample; population; sex]; with sample being identical to the name in the vcf.")
+	parser.add_argument("-t", "--transver", action="store_true", help="Transversions only.")
 	parser.add_argument("-f", "--fixedpairs", action="store_true", help="Don't create all possible combinations of pop1-pop4 but just paste them (all need same length then). --pwpops input implies --fixedpairs.")
 
 
@@ -137,7 +140,7 @@ def main():
 	pop_colnums, col_gender = D.get_pop_colnumbers(args.info, vcf_header, pops)
 
 	# count AAAA, BAAA, ABAA per pop-combi
-	pattern_counts = count_patterns(vcf, pop_colnums, pw_pops)
+	pattern_counts = count_patterns(vcf, pop_colnums, pw_pops, args.transver)
 
 	# rearrange output and print to file [[pop1][pop2][pop3][block][aaaa][baaa]...]
 	counts_out = pw_pops + pattern_counts
