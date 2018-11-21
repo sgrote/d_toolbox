@@ -117,8 +117,7 @@ get_offi = function(x, offinames){
 }
 
 #### main
-
-if (! interactive()){
+if (sys.nframe() == 0){
 
 	option_list = list(
 		make_option(c("-d", "--infile"), type="character", default="out_d", 

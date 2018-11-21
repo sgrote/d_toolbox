@@ -1,11 +1,16 @@
+#!/usr/bin/env Rscript
+
 
 # go through all autosome subdirectories and combine abba and baba 
 # genomewide only uses autosomes!
 
-# jackknife:
-source("/mnt/expressions/steffi/D/d_toolbox/d_functions.R")
 require(gtools)
 require(plyr)
+
+# jackknife:
+argv = commandArgs(trailingOnly = FALSE)
+base_dir = dirname(substring(argv[grep("--file=", argv)], 8))
+source(file.path(base_dir, "d_functions.R"))
 
 # get chrom subdirs
 subdirs = dir()[file.info(dir())$isdir]
