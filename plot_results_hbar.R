@@ -4,7 +4,6 @@
 
 library("optparse")
 
-## TODO: use this approach in other scripts too
 # source other script from same directory as this script
 # (only works with Rscript, not source)
 argv = commandArgs(trailingOnly = FALSE)
@@ -13,7 +12,6 @@ source(file.path(base_dir, "plot_results_bar.R"))
 
 # TODO:
 # maybe still use colors for populations as text colors for X and Y
-# add more space for legend
 
 
 #### helper

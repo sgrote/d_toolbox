@@ -50,6 +50,7 @@ def main():
 
 	county_invar = 0
 	county_private = 0
+	county_masked = 0
 
 	for line in vcf:
 		line = line.rstrip().split()
@@ -72,11 +73,13 @@ def main():
 					inside_alleles = D.unique_variants(line, sample_index)
 					group_single = [i for i in inside_alleles if i not in outside_alleles] 
 					if len(group_single) > 0:
+						# mask
 						for s in sample_index:
 							for g in group_single:
 								line[s] = line[s].replace(g,".")
-					# update ALT
-					line = M.check_complete_alt(line)
+						# update ALT
+						line = M.check_complete_alt(line)
+						county_masked += 1
 					sys.stdout.write("\t".join(line) + "\n")
 
 		except (IndexError, ValueError) as errore:
@@ -86,6 +89,7 @@ def main():
 			
 	sys.stderr.write("Nr of removed invariable sites: " + str(county_invar) + "\n")
 	sys.stderr.write("Nr of removed group singleton sites: " + str(county_private) + "\n")
+	sys.stderr.write("Nr of masked group singleton sites: " + str(county_masked) + "\n")
 
 
 if __name__ == "__main__":
