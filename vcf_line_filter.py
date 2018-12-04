@@ -64,8 +64,9 @@ def filter_line(filter_string, vcf_line):
 	'''
 	filter_string = filter_string.split()
 	keys, key_indis = get_keys(filter_string)
-	# parse QUAL and FILTER column
-	filter_dict = {"QUAL":float(vcf_line[5]), "FILTER":vcf_line[6]}
+	# parse QUAL and FILTER column, if QUAL is undefined filter out when min-QUAL is filter criterium
+	qual = float(vcf_line[5]) if vcf_line[5] != "." else -float("Inf")
+	filter_dict = {"QUAL":qual, "FILTER":vcf_line[6]}
 	# parse INFO-field only if necessary
 	if not all([k in ["QUAL","FILTER"] for k in keys]):
 		#print("Include filter on info field")
@@ -79,9 +80,11 @@ def filter_line(filter_string, vcf_line):
 	return eval(info_state)
 
 ''' test
+vcf_line0 = ['21', '14896202', '.', 'C', 'T', '.', '.', 'AC=27;AN=558;AF=0.048;GF0=0;GF1=0', 'GT:GF']
 vcf_line1 = ['21', '14896202', '.', 'C', 'T', '0', '.', 'AC=27;AN=558;AF=0.048;GF0=0;GF1=0', 'GT:GF']
 vcf_line2 = ['21', '14896202', '.', 'C', 'T', '0', 'LowQual', 'AC=27;AN=558;AF=0.048;GF0=0;GF1=0', 'GT:GF']
 vcf_line3 = ['21', '14896202', '.', 'C', 'T', '100', 'PASS', 'AC=27;AN=558;AF=a_string']
+filter_line("QUAL > 1000", vcf_line0) == False
 filter_line("QUAL > 0 and AC == 27", vcf_line1) == False
 filter_line("( QUAL > 0 or FILTER != 'LowQual') and AC == 27", vcf_line1) == True
 filter_line("( QUAL > 0 and FILTER == 'PASS')", vcf_line1) == False
