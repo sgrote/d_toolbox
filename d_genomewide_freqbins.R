@@ -3,11 +3,17 @@
 # compute D(pop1, pop2, pop3, pop4) per derived freq-bin in pop3 (per pop1 or pop2 makes no sense)
 # needs 'out_d' and a full 'sites' file (run d_stats.py with --sites 'full' and d_genomewide.R before)
 # population-matches are retrieved from out_d, can also take another file which might be a subset pop-matches
-# output: abba,baba,n_sites,d per pop-match and freq-bin (bin = mean of upper and lower bin-limit, bin=1 -> fixed)
+# output: abba,baba,n_sites,d,z per pop-match and freq-bin (bin = mean of upper and lower bin-limit, bin=1 -> fixed)
 
 library(optparse)
 library(readr)
 library(gtools)
+library(plyr)
+
+# jackknife:
+argv = commandArgs(trailingOnly = FALSE)
+base_dir = dirname(substring(argv[grep("--file=", argv)], 8))
+source(file.path(base_dir, "d_functions.R"))
 
 option_list = list(
 	make_option(c("-d", "--infile"), type="character", default="out_d",
@@ -25,19 +31,6 @@ output: abba, baba, n_sites, d per pop-match and freq-bin (bin = mean of upper (
 opt = parse_args(opt_parser)
 print(opt)
 
-
-## helper
-
-# create empty data.frame to add ABBAs and BABAs
-initialize = function(pop_match, bins){
-	pop_df = t(data.frame(pop_match))
-	colnames(pop_df) = paste0("pop", 1:4)
-	out = data.frame(pop_df[rep(1, length(bins)),], bin=bins, row.names=NULL)
-	out$abba = 0
-	out$baba = 0
-	out$n_sites = 0
-	return(out)
-}
 
 
 ## main
@@ -60,7 +53,7 @@ fixed_pops = unique(out_d$fixed_pop)
 
 # initialize sums per freq-bin and pop1-pop2-pop3-pop4 combi (list)
 out_d$paste_pops = paste(out_d[,1], out_d[,2], out_d[,3], out_d[,4], sep="_")
-freq_list = apply(out_d[,c(1:4)], 1, initialize, bins)
+freq_list = vector("list", length=nrow(out_d))
 names(freq_list) = out_d$paste_pops
 
 # get chrom subdirs
@@ -69,6 +62,7 @@ chroms = subdirs[substr(subdirs,1,3)=="chr"]
 chroms = mixedsort(chroms)
 
 ## loop over chrom-subdirectories
+last_block = 0
 for (i in 1:length(chroms)){
 	setwd(chroms[i])
 	print(getwd())
@@ -84,8 +78,11 @@ for (i in 1:length(chroms)){
 	    setwd("../")
 	    next
 	}
-	# convert to numeric (None -> NA)
-	sites[,5:ncol(sites)] = suppressWarnings(sapply(sites[,5:ncol(sites)], as.numeric))
+	# convert blocks and freqs to numeric (None -> NA)
+	sites[,c(1,5:ncol(sites))] = suppressWarnings(sapply(sites[,c(1,5:ncol(sites))], as.numeric))
+	# increment block nrs, independent 1:x per chrom
+	sites$block = sites$block + last_block
+	last_block = sites[nrow(sites), "block"]
 	## loop over pop1-pop2-pop4 population
 	for (fp in fixed_pops){
 		one124 = out_d[out_d$fixed_pop == fp,]
@@ -107,41 +104,41 @@ for (i in 1:length(chroms)){
 			pp = one124[j,"paste_pops"]
 			# remove pop3 fixed A or NA)
 			b0 = freqs[,pop3] %in% c(0,NA)
-			p_abba = p_ab[!b0] * freqs[!b0,pop3]
-			p_baba = p_ba[!b0] * freqs[!b0,pop3]
-			inform_site = (p_abba != 0 | p_baba != 0) * 1
-			# get freq bins, bin = mean of borders (1 only for fixed)
+			abba = p_ab[!b0] * freqs[!b0,pop3]
+			baba = p_ba[!b0] * freqs[!b0,pop3]
+			inform_site = (abba != 0 | baba != 0) * 1
+			# get freq bins and blocks, bin = mean of borders (1 only for fixed)
 			freqbins = floor(freqs[!b0,pop3]*opt$bins) / opt$bins
 			freqbins[freqbins != 1] = freqbins[freqbins != 1] + (bin_width/2)
-			# ABBA/BABA per bin
-			f_abba = tapply(p_abba, freqbins, sum)
-			f_baba = tapply(p_baba, freqbins, sum)
-			f_sites = tapply(inform_site, freqbins, sum)
-			# just in case, e.g. for bins w/o abba/baba sites
-			abba = unname(f_abba[match(bins, names(f_abba))])
-			baba = unname(f_baba[match(bins, names(f_baba))])
-			n_sites = unname(f_sites[match(bins, names(f_sites))])
-			abba[is.na(abba)] = 0
-			baba[is.na(baba)] = 0
-			n_sites[is.na(n_sites)] = 0
+			blocks = freqs[!b0, "block"]
+			# ABBA/BABA/n_sites per bin and block
+			counts = aggregate(data.frame(abba, baba, inform_site), list(bin=freqbins, block=blocks), sum)
 			# add to genomewide
-			freq_list[[pp]]$abba = freq_list[[pp]]$abba + abba
-			freq_list[[pp]]$baba = freq_list[[pp]]$baba + baba
-			freq_list[[pp]]$n_sites = freq_list[[pp]]$n_sites + n_sites
+			freq_list[[pp]] = append(freq_list[[pp]], list(counts))
 		}
 	}
 	setwd("../")
 }
-	
-## convert list to data.frame
-out = do.call(rbind, freq_list)
-row.names(out) = NULL
 
-## compute D per freq and pop-match
-out$d = (out$baba - out$abba)/(out$baba + out$abba)
+# for each list element: combine chromosomes
+freq_list = lapply(freq_list, function(x){do.call(rbind, x)})
+
+# for each list element: run jackknife per bin
+d = lapply(freq_list, function(x){ddply(x, .(bin), d_jackknife)})
+n = lapply(freq_list, function(x){ddply(x, .(bin), function(y) {sum(y$inform_site)})})
+
+# create output
+out = cbind(do.call(rbind,d), do.call(rbind,n))
+out = cbind(out_d[rep(1:nrow(out_d), each=nrow(d[[1]])),1:4], out)
+out = out[,c(1:5,8,9,11,6,7)]
+colnames(out)[8] = "n_sites"
 
 ## account for ABBA+BABA = 0
 out$d[is.na(out$d)] = 0
+out$z[is.na(out$z)] = 0
 
 ## save
 write.table(out, opt$outfile, quote=F, row.names=F, sep="\t")
+
+
+
