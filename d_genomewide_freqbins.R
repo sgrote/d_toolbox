@@ -10,10 +10,6 @@ library(readr)
 library(gtools)
 library(plyr)
 
-# jackknife:
-argv = commandArgs(trailingOnly = FALSE)
-base_dir = dirname(substring(argv[grep("--file=", argv)], 8))
-source(file.path(base_dir, "d_functions.R"))
 
 option_list = list(
 	make_option(c("-d", "--infile"), type="character", default="out_d",
@@ -31,6 +27,10 @@ output: abba, baba, n_sites, d per pop-match and freq-bin (bin = mean of upper (
 opt = parse_args(opt_parser)
 print(opt)
 
+# jackknife:
+argv = commandArgs(trailingOnly = FALSE)
+base_dir = dirname(substring(argv[grep("--file=", argv)], 8))
+source(file.path(base_dir, "d_functions.R"))
 
 
 ## main
