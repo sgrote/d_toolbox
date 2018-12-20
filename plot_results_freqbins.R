@@ -5,14 +5,13 @@
 
 
 library(optparse)
- 
 
 
 
 #### helper
 
 # plot D(pop1, pop2, X, pop4) per freqbin
-plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL, lege=TRUE, namesfile=NULL, line=FALSE, smooth=FALSE){
+plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL, lege=TRUE, namesfile=NULL, line=FALSE, smooth=FALSE, zscore=FALSE, se=FALSE){
 	
 	# merge with superpop-info and define spaces between bars
 	plot_pops = unique(input$pop3)
@@ -32,6 +31,20 @@ plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL, lege=TRUE, names
 #	xlab="Derived allele frequency in X"
 	xlab=""
 
+	# signficance char
+	input$pch = 1
+	if (zscore){
+		input[abs(input$z) > 2, "pch"] = 4
+		input[abs(input$z) > 3, "pch"] = 8
+	}
+	
+	# adjust ylim if SE is plotted (but with upper limit)
+	if (se & is.null(ymin)){
+		# compute y-axis range
+		ymin = min(0, min(input$d - input$se))
+		ymax = max(0, max(input$d + input$se))
+	}
+	
 	# empty plot
 	# TODO: make xlim parameter for zoom-ins
 	plot(input$bin, input$d, type="n", xlim=c(0,1.07), ylim=c(ymin,ymax), ylab=ylab, xlab=xlab)  
@@ -48,6 +61,9 @@ plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL, lege=TRUE, names
 	if (lege){
 		legend("topright", legend=plot_pops, lty=1, col=plot_cols, bty="n", cex=1.2, lwd=3)
 	}
+	if (zscore){
+		legend("top", cex=1, legend=c("|Z| > 2","|Z| > 3"), pch=c(4,8), bty="n", title=" weighted block Jackknife", x.intersp=2)
+	}
 	
 	# add points/lines for each pop3
 	for (j in 1:length(plot_pops)){
@@ -60,7 +76,11 @@ plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL, lege=TRUE, names
 				lines(one3$bin, one3$d, col=plot_cols[j])
 			}
 		}
-		points(one3$bin, one3$d, col=plot_cols[j], cex=0.7)
+		points(one3$bin, one3$d, col=plot_cols[j], cex=1, pch=one3$pch)
+		# error bars
+		if (se){
+			suppressWarnings(arrows(c(one3$bin,one3$bin), c(one3$d+one3$se,one3$d-one3$se), c(one3$bin,one3$bin), c(one3$d, one3$d), angle=90, code=1, length=0.015, col=plot_cols[j]))
+		}
 	}
 }
 
@@ -116,6 +136,10 @@ if (sys.nframe() == 0){
 			help="Draw lines between dots."),
 		make_option(c("-s", "--smooth"), action="store_true", default=FALSE,
 			help="Draw loess curves."),
+		make_option(c("-z", "--zscore"), action="store_true", default=FALSE,
+			help="Show Z-score and significance."),
+		make_option(c("-e", "--se"), action="store_true", default=FALSE,
+			help="Show standard error."),
 		make_option(c("-n", "--names"), type="character",
 			help="optional .csv table with 2 columns: sample name, official name")
 	)
@@ -142,6 +166,15 @@ if (sys.nframe() == 0){
 
 	# convert D to percent
 	d_freqs$d = d_freqs$d * 100
+	
+	# compute SE
+	if (opt$zscore | opt$se){
+		if (!"z" %in% colnames(d_freqs)){
+			stop("option -z/--zscore needs column 'z' in ", opt$infile)
+		}
+		d_freqs$se = d_freqs$d / d_freqs$z
+		d_freqs$se[is.na(d_freqs$se)] = 0
+	}
 
 	# pop-combi per page
 	if (opt$unipop){
@@ -168,10 +201,14 @@ if (sys.nframe() == 0){
 	pdf(opt$outpdf, width=11, height=8)
 		par(cex.main=1.2, cex.lab=1.2, oma=c(5,1.5,4,1), mar=c(1,4,2,2))
 		layout(matrix(c(1,1,2),3,1))
+		
 		if (opt$fixedy){
+			if (!opt$se){
+				d_freqs$se = 0
+			}
 			# compute y-axis range for plot_d_freqs (in %)
-			ymin = min(0, min(d_freqs$d)) * 1.1
-			ymax = max(0, max(d_freqs$d)) * 1.1 # for space above for legends
+			ymin = min(0, min(d_freqs$d - d_freqs$se)) * 1.1
+			ymax = max(0, max(d_freqs$d + d_freqs$se)) * 1.1
 			ymax_sites = max(d_freqs$n_sites)
 		} else {
 			ymin = NULL
@@ -180,9 +217,9 @@ if (sys.nframe() == 0){
 		}
 		for (pp in combis){
 			page_data = d_freqs[d_freqs$paste_pop == pp,]
-			plot_d_freqs(page_data, superpops, ymin=ymin, ymax=ymax, namesfile=opt$names, line=opt$lines, smooth=opt$smooth)
+			plot_d_freqs(page_data, superpops, ymin=ymin, ymax=ymax, namesfile=opt$names, line=opt$lines, smooth=opt$smooth, zscore=opt$zscore, se=opt$se)
 			plot_n_sites(page_data, ymax_sites)
 		}
-dev.off()
+	dev.off()
 
 }
