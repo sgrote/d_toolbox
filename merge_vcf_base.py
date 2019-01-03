@@ -19,7 +19,6 @@ def main():
 	parser.add_argument("base_name", help="Name of new column in the merged vcf-header")
 	parser.add_argument("--var", action="store_true", help="Restrict to variable sites")
 	parser.add_argument("--gt_only", action="store_true", help="Restrict to genotypes in sample columns")
-	parser.add_argument("--fill2", action="store_true", help="Fill base_file with REF 0/0 for missing positions, else ./. (this will rarely be useful, only when base_file contains only non-REF bases)")
 	parser.add_argument("--require2", action="store_true", help="Restrict to positions present in base_file")
 	parser.add_argument("--keep_miss", action="store_true", help="Keep vcf lines that were filtered out as missing data ./. even if base is not present. (If filter fails but base present line is always kept.)")
 	parser.add_argument("--filter1", help="Expression to filter vcf, e.g. 'QUAL > 0 and AC > 10'. Acts on QUAL, FILTER and INFO fields. CAUTION: needs whitespaces around keywords.")
@@ -39,12 +38,6 @@ def main():
 		vcf = vcf_in.readline()
 	sys.stdout.write("\t".join([vcf.rstrip()] + [args.base_name]) + "\n")
 
-	# new genotype if pos is not present in base_file
-	if args.fill2:
-		fill_base_gt = "0/0"
-	else:
-		fill_base_gt = "./."
-
 	# open base-file
 	if args.base_file.endswith('.gz'):
 	    opener = gzip.open
@@ -63,14 +56,14 @@ def main():
 			try:
 				out = None
 				# pos not in base, including the case that base file has reached end
-				# -> if base not required and vcf passes filter: add base 0/0 or ./. GT and read next vcf line
+				# -> if base not required and vcf passes filter: add base ./. GT and read next vcf line
 				if (len(base) == 0) or (int(vcf[1]) < int(base[1])):
 					if not args.require2:
 						filtered_vcf = F.combi_filter(vcf, args.filter1, args.filter_ind1, args.gt_only, args.var, args.keep_miss)
 						if filtered_vcf:
-							out = filtered_vcf + [fill_base_gt]
+							out = filtered_vcf + ["./."]
 						elif args.keep_miss:
-							out = vcf[:9] + ["./."] * (nvcf) + [fill_base_gt]
+							out = vcf[:9] + ["./."] * (nvcf) + ["./."]
 					vcf = vcf_in.readline().split()
 				## pos not vcf --> skip: since REF at this pos is not known
 				elif int(base[1]) < int(vcf[1]):
