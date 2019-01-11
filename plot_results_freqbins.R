@@ -41,8 +41,8 @@ plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL, lege=TRUE, names
 	# adjust ylim if SE is plotted (but with upper limit)
 	if (se & is.null(ymin)){
 		# compute y-axis range
-		ymin = min(0, min(input$d - input$se))
-		ymax = max(0, max(input$d + input$se))
+		ymin = min(0, min(input$d - input$se)) * 1.1
+		ymax = max(0, max(input$d + input$se)) * 1.1
 	}
 	
 	# empty plot
@@ -59,10 +59,10 @@ plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL, lege=TRUE, names
 	
 	# legend
 	if (lege){
-		legend("topright", legend=plot_pops, lty=1, col=plot_cols, bty="n", cex=1.2, lwd=3)
+		legend("topright", legend=plot_pops, lty=1, col=plot_cols, bty="n", cex=1.2, lwd=3, title="X")
 	}
 	if (zscore){
-		legend("top", cex=1, legend=c("|Z| > 2","|Z| > 3"), pch=c(4,8), bty="n", title=" weighted block Jackknife", x.intersp=2)
+		legend("top", cex=1.2, legend=c("|Z| > 2","|Z| > 3"), pch=c(4,8), bty="n", title=" weighted block Jackknife", x.intersp=2)
 	}
 	
 	# add points/lines for each pop3
