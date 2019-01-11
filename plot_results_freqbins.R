@@ -11,7 +11,7 @@ library(optparse)
 #### helper
 
 # plot D(pop1, pop2, X, pop4) per freqbin
-plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL, lege=TRUE, namesfile=NULL, line=FALSE, smooth=FALSE, zscore=FALSE, se=FALSE){
+plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL, lege=TRUE, namesfile=NULL, line=FALSE, smooth=FALSE, zscore=FALSE, se=FALSE, lowgrid=FALSE){
 	
 	# merge with superpop-info and define spaces between bars
 	plot_pops = unique(input$pop3)
@@ -50,8 +50,10 @@ plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL, lege=TRUE, names
 	plot(input$bin, input$d, type="n", xlim=c(0,1.07), ylim=c(ymin,ymax), ylab=ylab, xlab=xlab)  
 	# add grid lines
 	abline(h=0, col="lightblue")
-	for (k in seq(0.01, 0.05, 0.01)){
-		abline(v=k, col="lightgray")
+	if (lowgrid){
+		for (k in seq(0, 0.05, 0.01)){
+			abline(v=k, col="lightgray")
+		}
 	}
 	# titel
 	mtext(titel, line=2, adj=0.5, cex=par()$cex.main, font=2)
@@ -140,6 +142,8 @@ if (sys.nframe() == 0){
 			help="Show Z-score and significance."),
 		make_option(c("-e", "--se"), action="store_true", default=FALSE,
 			help="Show standard error."),
+		make_option(c("-g", "--lowgrid"), action="store_true", default=FALSE,
+			help="Show vertical lines at 0%-5% where introgression signal should peak."),
 		make_option(c("-n", "--names"), type="character",
 			help="optional .csv table with 2 columns: sample name, official name")
 	)
@@ -217,7 +221,7 @@ if (sys.nframe() == 0){
 		}
 		for (pp in combis){
 			page_data = d_freqs[d_freqs$paste_pop == pp,]
-			plot_d_freqs(page_data, superpops, ymin=ymin, ymax=ymax, namesfile=opt$names, line=opt$lines, smooth=opt$smooth, zscore=opt$zscore, se=opt$se)
+			plot_d_freqs(page_data, superpops, ymin=ymin, ymax=ymax, namesfile=opt$names, line=opt$lines, smooth=opt$smooth, zscore=opt$zscore, se=opt$se, lowgrid=opt$lowgrid)
 			plot_n_sites(page_data, ymax_sites)
 		}
 	dev.off()
