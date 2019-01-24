@@ -395,11 +395,13 @@ check_bial(line, p4, np4) == ['21','148','.','A','G','0','.','.','GT','./.','0/0
 
 
 
-def get_p(vcf_line, pop, digits=None):
+def get_p(vcf_line, pop, digits=None, counts=False):
 	'''
 	alternative allele-freqs for one population for one biallelic site
 	in: vcf = vcf-line as list
 		pop = [colnumbers] for the population
+		digits = digits to round to
+		counts = return ("ALT/total") counts as string instead of the fraction 
 	out: ALT-allele-freq
 	'''
 	
@@ -408,7 +410,7 @@ def get_p(vcf_line, pop, digits=None):
 	
 	## pre-check for all-REF or all missing
 	genotypes = [vcf_line[colnumber] for colnumber in pop]
-	if all([g in ["0/0", "0|0", "0"] for g in genotypes]):
+	if not counts and all([g in ["0/0", "0|0", "0"] for g in genotypes]):
 		return 0.0
 	if all([g in ["./.", ".|.", "."] for g in genotypes]):
 		return None
@@ -432,11 +434,12 @@ def get_p(vcf_line, pop, digits=None):
 	# compute frequency 
 	if sum_alleles == 0:
 		return None   # unknown sites may be fully genotyped invariable sites, here there is simply no GT 
+	elif counts:
+		daf = str(ac) + "/" + str(sum_alleles)
 	else: 
 		daf = ac*1.0 / sum_alleles
-	# round
-	if digits:
-		daf = round(daf, digits)
+		if digits:
+			daf = round(daf, digits)
 	return daf
 
 ''' test
@@ -445,20 +448,25 @@ vcf_line2 = ['X','148','.','C','T','0','.','.','GT','1/1','1','./0','./.','1|.',
 
 get_p(vcf_line1, [9,10]) == 0.75
 get_p(vcf_line1, [9,10,11]) == 3.0/5
+get_p(vcf_line1, [9,10,11], counts=True) == '3/5'
 get_p(vcf_line1, [9,10,11,14,15]) == 5.0/7
+get_p(vcf_line1, [9,10,11,14,15], counts=True) == '5/7'
 get_p(vcf_line1, [9,10,11,14,15], digits=4) == 0.7143
 get_p(vcf_line1, [12,13,14,15]) == 1
 get_p(vcf_line2, [9,10]) == 1
 get_p(vcf_line2, [9,11]) == 2.0/3
 get_p(vcf_line2, [9,14]) == 0.75
-get_p(vcf_line2, [9,14], digits=1) == 0.7
+get_p(vcf_line2, [9,14], digits=1) == 0.8
 get_p(vcf_line2, [10,14]) == 2.0/3
 get_p(vcf_line2, [9,10,11,12]) == 0.75
 get_p(vcf_line2, [9,10,11,12,13]) == 0.8
 get_p(vcf_line1, [12,15]) == None
 get_p(vcf_line2, [12,15]) == None
+get_p(vcf_line2, [12,15], counts=True) == None
 get_p(vcf_line2, [16,17]) == 0
+get_p(vcf_line2, [16,17], counts=True) == '0/3'
 get_p(vcf_line1, [16,17]) == 0
+get_p(vcf_line1, [16,17], counts=True) == '0/4'
 
 '''
 
