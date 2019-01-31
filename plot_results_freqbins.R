@@ -70,13 +70,12 @@ plot_d_freqs = function(input, superpops, ymin=NULL, ymax=NULL, lege=TRUE, names
 	# add points/lines for each pop3
 	for (j in 1:length(plot_pops)){
 		one3 = input[input$pop3 == plot_pops[j],]
+		if (smooth){
+			loe = loess(one3$d ~ one3$bin)
+			lines(one3$bin, predict(loe), col=plot_cols[j])
+		}
 		if (line){
-			if (smooth){
-				loe = loess(one3$d ~ one3$bin)
-				lines(one3$bin, predict(loe), col=plot_cols[j])
-			} else {
-				lines(one3$bin, one3$d, col=plot_cols[j])
-			}
+			lines(one3$bin, one3$d, col=plot_cols[j])
 		}
 		points(one3$bin, one3$d, col=plot_cols[j], cex=1, pch=one3$pch)
 		# error bars
