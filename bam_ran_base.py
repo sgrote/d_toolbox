@@ -29,15 +29,15 @@ import argparse
 ###########################################################
 
 # one position
-def sample_base(pos, min_reads, min_qual):
+def sample_base(pos, min_cov, min_qual, n_reads):
     ## remove 0-read-coverage and Indels (not a full line)
-    if int(pos[3]) < min_reads or "+" in pos[4] or "-" in pos[4]:
+    if int(pos[3]) < min_cov or "+" in pos[4] or "-" in pos[4]:
         #print("aussortiert")
         #print(pos)
-        return(None)
+        return None
     bases = list(pos[4].upper())
     quals = list(pos[5])
-
+    
     # remove read-start/end encodings
     if "^" in bases or "$" in bases:
         bases = [bases[i] for i in range(len(bases)) if not (bases[i] in "$^" or bases[i-1]=="^")]
@@ -53,33 +53,59 @@ def sample_base(pos, min_reads, min_qual):
         #print([qu < min_qual for qu in q])
         bases = [bases[i] for i in range(len(bases)) if q[i] >= min_qual and bases[i]!="*"]
         if len(bases) == 0:
-            return(None)
-        
+            return None
+    
     if any([base not in ["A","C","T","G"] for base in bases]):
         print("unclean!")
         print(pos)
         print(bases)
+        bases = [b for b in bases if b in ["A","C","T","G"]]
+        
+    # check coverage again after filtering
+    if len(bases) < min_cov:
+        return None
     
     # select a random base
-    ran_base = random.choice(bases)
-    #if len(set(bases)) > 1: 
-        #print(pos)
-        #print(ran_base)
-    out = pos[:2] + [ran_base]
-    return(out)
+    try:
+        ran_base = random.sample(bases, n_reads)
+    except ValueError as errore:
+        print(bases)
+        print(n_reads)
+        print(min_cov)
+        sys.exit(errore)
+    out = pos[:2] + ran_base
+    return out 
 
 
+''' test
+pos = ["21", "9579965", "N", "4", "ACTGE", "]A\]]"]
+sample_base(pos, 3, 30, 3)
+pos = ["21", "9579965", "N", "4", "ACTG", "???N"]
+sample_base(pos, 1, 30, 1)
+# only one passing quality
+sample_base(pos, 1, 40, 1) == ['21', '9579965', 'G']
+# remove read-range encodings
+pos = ["21", "9579965", "N", "4", "^FA$", "N"]
+sample_base(pos, 1, 30, 1) == ['21', '9579965', 'A']
+sample_base(pos, 2, 30, 2) == None
+
+'''
 
 ###########################################################
 
 
 def main():
-    parser = argparse.ArgumentParser(description="take a samtools mpileup *.bam output from stdin and sample a random read write [chr | pos | base] to outfile (one file per chrom)", usage="samtools mpileup sample.bam | bam_ran_base.py outfile_trunk")
+    parser = argparse.ArgumentParser(description="take a samtools mpileup *.bam output from stdin and sample one or more random bases. write [chr | pos | base1 | base2 ...] to outfile (one file per chrom)", usage="samtools mpileup sample.bam | bam_ran_base.py outfile_trunk")
     parser.add_argument("outfile_trunk", type=str, help="trunk of output filename (one file per chrom will be generated)")
-    parser.add_argument("--min_reads", type=int, default=1, help="minimum number of reads, site will be skipped if lower coverage.")
+    parser.add_argument("--min_cov", type=int, default=1, help="minimum number of filtered-passing reads covering a site. Site will be skipped if lower coverage.")
     parser.add_argument("--min_qual", type=int, default=30, help="minimum quality of base, bases with lower qual will be disregarded.")
+    parser.add_argument("--n_reads", type=int, default=1, help="number of bases to be sampled (without replacement).")
     
     args = parser.parse_args()
+    
+    # check coverage filter
+    if args.n_reads > args.min_cov:
+        args.min_cov = args.n_reads
     
     # mpileup from stdin
     if sys.stdin.isatty():
@@ -92,11 +118,10 @@ def main():
     while True:
         chrom = pos[0]
         print("next chrom!")
-        #if chrom=="3": break
         outfile = args.outfile_trunk + "_chr" + chrom + ".tab.gz"
         print(pos)
         with gzip.open(outfile, "wt") as out:
-            outline = sample_base(pos, args.min_reads, args.min_qual)
+            outline = sample_base(pos, args.min_cov, args.min_qual, args.n_reads)
             print(outline)
             if outline:
                 outline = "\t".join(outline)+"\n"
@@ -107,8 +132,7 @@ def main():
                 if pos[0] != chrom:
                     print("Next chrom!")
                     break
-                outline = sample_base(pos, args.min_reads, args.min_qual)
-                #print(outline)
+                outline = sample_base(pos, args.min_cov, args.min_qual, args.n_reads)
                 if outline:
                     outline = "\t".join(outline)+"\n"
                     out.write(outline)
