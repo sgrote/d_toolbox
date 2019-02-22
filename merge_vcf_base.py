@@ -20,9 +20,6 @@ def main():
 	parser.add_argument("--var", action="store_true", help="Restrict to variable sites")
 	parser.add_argument("--gt_only", action="store_true", help="Restrict to genotypes in sample columns")
 	parser.add_argument("--require2", action="store_true", help="Restrict to positions present in base_file")
-	parser.add_argument("--keep_miss", action="store_true", help="Keep vcf lines that were filtered out as missing data ./. even if base is not present. (If filter fails but base present line is always kept.)")
-	parser.add_argument("--filter1", help="Expression to filter vcf, e.g. 'QUAL > 0 and AC > 10'. Acts on QUAL, FILTER and INFO fields. CAUTION: needs whitespaces around keywords.")
-	parser.add_argument("--filter_ind1", help="Expression to filter individual genotypes of vcf, e.g. 'GF >= 0 or GT == 1/1'. Acts on keywords in FORMAT. Not passing genotypes will be replaced by './.' . CAUTION: needs whitespaces around keywords.")
 	
 	args = parser.parse_args()
 
@@ -56,14 +53,10 @@ def main():
 			try:
 				out = None
 				# pos not in base, including the case that base file has reached end
-				# -> if base not required and vcf passes filter: add base ./. GT and read next vcf line
+				# -> if base not required: add base ./. GT and read next vcf line
 				if (len(base) == 0) or (int(vcf[1]) < int(base[1])):
 					if not args.require2:
-						filtered_vcf = F.combi_filter(vcf, args.filter1, args.filter_ind1, args.gt_only, args.var, args.keep_miss)
-						if filtered_vcf:
-							out = filtered_vcf + ["./."]
-						elif args.keep_miss:
-							out = vcf[:9] + ["./."] * (nvcf) + ["./."]
+						out = vcf + ["./."]
 					vcf = vcf_in.readline().split()
 				## pos not vcf --> skip: since REF at this pos is not known
 				elif int(base[1]) < int(vcf[1]):
@@ -72,9 +65,7 @@ def main():
 				elif vcf[1] == base[1]:
 					new_alt, base_gt = B.convert_base(vcf[3], vcf[4], base[2])
 					if not (args.var and new_alt == "."):
-						# apply line-filter and genotype filter (replace non-passing genotypes with ./.)
-						filtered_vcf = F.combi_filter(vcf, args.filter1, args.filter_ind1, args.gt_only, False, True) # var=False since base might be only ALT; keep_miss=T -> never None
-						out = filtered_vcf[:4] + [new_alt] + filtered_vcf[5:] + [base_gt]
+						out = vcf[:4] + [new_alt] + vcf[5:] + [base_gt]
 					# read next lines from both files (also if not (vcf_pass or base_pass))
 					vcf = vcf_in.readline().split()
 					base = bases.readline().split()
@@ -92,14 +83,12 @@ if __name__ == "__main__":
 	main()
 
 ''' test
-VCF=/mnt/sequencedb/gendivdata/2_genotypes/mergedArchModernApes/merged_ancient_apes_sgdp1_chr21.vcf.gz
-BASE=/mnt/scratch/steffi/D/random_bases/Forbes_Quarry/FQDeam/ForbesDeam_chr21.tab.gz
+VCF=/mnt/sequencedb/gendivdata/2_genotypes/giantVcfs/merged_all_sites_arch_apes_sgdp1_g1000_chr21.vcf.gz
+BASE=/mnt/scratch/steffi/D/random_bases/Forbes_Quarry/forbes_deam_chr21.tab.gz
 MERGE=/mnt/expressions/steffi/D/d_toolbox/merge_vcf_base.py
-zcat $VCF | $MERGE $BASE ForbesDeam | less -S
-zcat $VCF | $MERGE $BASE ForbesDeam --require2 | less -S
-zcat $VCF | $MERGE $BASE ForbesDeam --require2 --var | less -S
-zcat $VCF | $MERGE $BASE ForbesDeam --filter1 "QUAL > 100" --var | less -S
-zcat $VCF | $MERGE $BASE ForbesDeam --filter1 "QUAL > 100" --keep_miss | less -S
+zcat $VCF | cut -f-15 | $MERGE $BASE ForbesDeam | less -S
+zcat $VCF | cut -f-15 | $MERGE $BASE ForbesDeam --require2 | less -S
+zcat $VCF | cut -f-15 | $MERGE $BASE ForbesDeam --require2 --var | less -S
 
 '''
 
