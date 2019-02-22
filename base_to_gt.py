@@ -38,7 +38,7 @@ def convert_base(ref, alt, base):
 	''' convert one base to GT and update ALT '''
 	base = base.upper()
 	if base == "N" or base == ".":
-		gt = "./."			
+		gt = "./."
 	elif base == ref:
 		gt = "0/0"
 	elif alt == ".":
@@ -56,6 +56,58 @@ convert_base("A", "C", "G") == ('C,G', '2/2')
 convert_base("A", "C", "N") == ('C', './.')
 convert_base("A", "C", ".") == ('C', './.')
 convert_base("A", "C,G", "T") == ('C,G,T', '3/3')
+
+'''
+
+def convert_base_haplo(ref, alt, base):
+	''' convert one base to haploid GT and update ALT '''
+	base = base.upper()
+	if base == "N" or base == ".":
+		gt = "."
+	elif base == ref:
+		gt = "0"
+	elif alt == ".":
+		gt = "1"
+		alt = base
+	else:
+		alt, gt = check_alts(alt, base)
+		# make haploid
+		gt = gt[0]
+	return alt, gt
+
+''' test
+convert_base_haplo("A", "C", "A") == ('C', '0')
+convert_base_haplo("A", "C", "C") == ('C', '1')
+convert_base_haplo("A", ".", "G") == ('G', '1')
+convert_base_haplo("A", "C", "G") == ('C,G', '2')
+convert_base_haplo("A", "C", "N") == ('C', '.')
+convert_base_haplo("A", "C", ".") == ('C', '.')
+convert_base_haplo("A", "C,G", "T") == ('C,G,T', '3')
+
+'''
+
+def convert_base_diploid(ref, alt, bases):
+	'''
+	convert bases = [base1, base2] to genotype
+	update ALT
+	'''
+	tmp_alt, base1_gt = convert_base_haplo(ref, alt, bases[0])
+	alt, base2_gt = convert_base_haplo(ref, tmp_alt, bases[1])
+	# sort to avoid '1/0'
+	base_gts = [base1_gt, base2_gt]
+	base_gts.sort()
+	gt = base_gts[0] + "/" + base_gts[1]
+	return alt, gt
+
+''' test
+convert_base_diploid("A", "C", ["A","A"]) == ('C', '0/0')
+convert_base_diploid("A", "C", ["C","C"]) == ('C', '1/1')
+convert_base_diploid("A", "C", ["C","A"]) == ('C', '0/1')
+convert_base_diploid("A", ".", ["G","A"]) == ('G', '0/1')
+convert_base_diploid("A", "C", ["G","C"]) == ('C,G', '1/2')
+convert_base_diploid("A", "C", ["A","N"]) == ('C', './0')
+convert_base_diploid("A", "C", ["T","T"]) == ('C,T', '2/2')
+convert_base_diploid("A", "C,G", ["T","G"]) == ('C,G,T', '2/3')
 
 '''
 

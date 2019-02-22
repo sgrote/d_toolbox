@@ -13,9 +13,12 @@ import gzip
 import vcf_line_filter as F
 import base_to_gt as B
 
+
+
+
 def main():
-	parser = argparse.ArgumentParser(description='Merge a vcf file from STDIN with a file containing [chr | pos | base] (compressed or uncompressed). Optional filtering of vcf. Header is taken from vcf; positions not in vcf are skipped. Writes to STDOUT.', usage='zcat file1.vcf.gz | merge_vcf_base.py base_file.gz newSample --filter1 "QUAL > 3" --require2')
-	parser.add_argument("base_file", help="File with chrom, pos, base; 1-based")
+	parser = argparse.ArgumentParser(description='Merge a vcf file from STDIN with a file containing [chr | pos | base | (base)] (compressed or uncompressed). Header is taken from vcf; positions not in vcf are skipped. Writes to STDOUT.', usage='zcat file1.vcf.gz | merge_vcf_base.py base_file.gz newSample --require2')
+	parser.add_argument("base_file", help="File with chrom, pos, base, (base); 1-based")
 	parser.add_argument("base_name", help="Name of new column in the merged vcf-header")
 	parser.add_argument("--var", action="store_true", help="Restrict to variable sites")
 	parser.add_argument("--gt_only", action="store_true", help="Restrict to genotypes in sample columns")
@@ -43,6 +46,14 @@ def main():
 	with opener(args.base_file, 'rt') as bases:
 		vcf = vcf_in.readline().split()
 		base = bases.readline().split()
+		# check if 1 or 2 bases
+		if len(base) == 3:
+			one_base = True
+		elif len(base) == 4:
+			one_base = False
+		else:
+			sys.exit("Error: Base file is expected to have 3 or 4 columns.")
+		# check chrom match
 		if vcf[0] != base[0]:
 			sys.exit("Error: Chromosomes do not match: vcf-chrom={}, base-chrom={}.".format(vcf[0], base[0]))
 		## number of donors
@@ -63,7 +74,11 @@ def main():
 					base = bases.readline().split()
 				## positions are present in both files
 				elif vcf[1] == base[1]:
-					new_alt, base_gt = B.convert_base(vcf[3], vcf[4], base[2])
+					# if haploid input, directly create pseudo-diploid genotype, else keep 2 haploids
+					if one_base:
+						new_alt, base_gt = B.convert_base(vcf[3], vcf[4], base[2])
+					else:
+						new_alt, base_gt = B.convert_base_diploid(vcf[3], vcf[4], base[2:4])
 					if not (args.var and new_alt == "."):
 						out = vcf[:4] + [new_alt] + vcf[5:] + [base_gt]
 					# read next lines from both files (also if not (vcf_pass or base_pass))
@@ -89,6 +104,13 @@ MERGE=/mnt/expressions/steffi/D/d_toolbox/merge_vcf_base.py
 zcat $VCF | cut -f-15 | $MERGE $BASE ForbesDeam | less -S
 zcat $VCF | cut -f-15 | $MERGE $BASE ForbesDeam --require2 | less -S
 zcat $VCF | cut -f-15 | $MERGE $BASE ForbesDeam --require2 --var | less -S
+
+VCF=/mnt/sequencedb/gendivdata/2_genotypes/giantVcfs/merged_all_sites_arch_apes_sgdp1_g1000_chr21.vcf.gz
+BASE=/mnt/scratch/steffi/D/random_bases/High_cov/Altai/altai_all_2_chr21.tab.gz
+MERGE=/mnt/expressions/steffi/D/d_toolbox/merge_vcf_base.py
+zcat $VCF | cut -f-15 | $MERGE $BASE AltaiAll2 | less -S
+zcat $VCF | cut -f-15 | $MERGE $BASE AltaiAll2 --require2 | less -S
+zcat $VCF | cut -f-15 | $MERGE $BASE AltaiAll2 --require2 --var | less -S
 
 '''
 
