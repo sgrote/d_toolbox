@@ -67,7 +67,8 @@ def main():
 				# -> if base not required: add base ./. GT and read next vcf line
 				if (len(base) == 0) or (int(vcf[1]) < int(base[1])):
 					if not args.require2:
-						out = vcf + ["./."]
+						if not (args.var and vcf[4] == "."):
+							out = vcf + ["./."]
 					vcf = vcf_in.readline().split()
 				## pos not vcf --> skip: since REF at this pos is not known
 				elif int(base[1]) < int(vcf[1]):
@@ -87,8 +88,9 @@ def main():
 				# print merged line if any
 				if out:
 					sys.stdout.write("\t".join(out) + "\n")
-			except (IndexError, ValueError) as errore:
+			except (IndexError, ValueError, EOFError) as errore:
 				sys.stderr.write(str(errore) + "\n")
+				sys.stderr.write(args.base_file + "\n")
 				sys.stderr.write("\t".join(vcf) + "\n")
 				sys.stderr.write("\t".join (base) + "\n")
 				sys.exit()
@@ -103,7 +105,7 @@ BASE=/mnt/scratch/steffi/D/random_bases/Forbes_Quarry/forbes_deam_chr21.tab.gz
 MERGE=/mnt/expressions/steffi/D/d_toolbox/merge_vcf_base.py
 zcat $VCF | cut -f-15 | $MERGE $BASE ForbesDeam | less -S
 zcat $VCF | cut -f-15 | $MERGE $BASE ForbesDeam --require2 | less -S
-zcat $VCF | cut -f-15 | $MERGE $BASE ForbesDeam --require2 --var | less -S
+zcat $VCF | cut -f-15 | $MERGE $BASE ForbesDeam --var | less -S
 
 VCF=/mnt/sequencedb/gendivdata/2_genotypes/giantVcfs/merged_all_sites_arch_apes_sgdp1_g1000_chr21.vcf.gz
 BASE=/mnt/scratch/steffi/D/random_bases/High_cov/Altai/altai_all_2_chr21.tab.gz
@@ -111,6 +113,7 @@ MERGE=/mnt/expressions/steffi/D/d_toolbox/merge_vcf_base.py
 zcat $VCF | cut -f-15 | $MERGE $BASE AltaiAll2 | less -S
 zcat $VCF | cut -f-15 | $MERGE $BASE AltaiAll2 --require2 | less -S
 zcat $VCF | cut -f-15 | $MERGE $BASE AltaiAll2 --require2 --var | less -S
+zcat $VCF | cut -f-15 | $MERGE $BASE AltaiAll2 | $MERGE $BASE AltaiAll22 --var | less -S
 
 '''
 
