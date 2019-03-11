@@ -4,12 +4,6 @@
 
 library("optparse")
 
-# source other script from same directory as this script
-# (only works with Rscript, not source)
-argv = commandArgs(trailingOnly = FALSE)
-base_dir = dirname(substring(argv[grep("--file=", argv)], 8))
-source(file.path(base_dir, "plot_results_bar.R"))
-
 # TODO:
 # maybe still use colors for populations as text colors for X and Y
 
