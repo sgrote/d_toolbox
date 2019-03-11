@@ -83,14 +83,9 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 	suppressWarnings(arrows(c(bars,bars), c(input$d+input$se,input$d-input$se), c(bars,bars), c(input$d, input$d), angle=90, code=1, length=0.015))
 	# significance asterix
 	input$bars = bars
-	posi = input[input$d >= 0,]
-	nega = input[input$d < 0,]
-	if(nrow(posi) > 0){
-		text(x=posi$bars, y=posi$d+posi$se, labels=posi$asterix, pos=3, offset=0, cex=cexnames)
-	}
-	if(nrow(nega) > 0){
-		text(x=nega$bars, y=nega$d-nega$se, labels=nega$asterix, pos=1, cex=cexnames)		
-	}
+	offset = 0.05 * span
+    ytext = input$d + sign(input$d) * (input$se + offset)
+    text(x=input$bars, y=ytext, labels=input$asterix, cex=cexnames)
 	
 	# subtitle
 	if (infsites){

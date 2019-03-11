@@ -103,14 +103,9 @@ plot_d_hbars = function(input, superpops=NULL, xmin=NULL, xmax=NULL, mcex=0.8, l
 
 	# significance asterix
 	input$bars = bars
-	posi = input[input$d >= 0,]
-	nega = input[input$d < 0,]
-	if(nrow(posi) > 0){
-		text(y=posi$bars, x=posi$d + posi$se + span*0.02, labels=posi$asterix, adj=0.5, cex=cexnames, srt=90)
-	}
-	if(nrow(nega) > 0){
-		text(y=nega$bars, x=nega$d - nega$se - span*0.02, labels=nega$asterix, adj=0.5, cex=cexnames, srt=90) # TODO srt?	
-	}
+	offset = 0.02 * span
+	ytext = input$d + sign(input$d) * (input$se + offset)
+	text(y=input$bars, x=ytext, labels=input$asterix, adj=0.5, cex=cexnames, srt=90)
 
 	# subtitle
 	if (infsites){
