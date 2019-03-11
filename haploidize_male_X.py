@@ -53,7 +53,8 @@ def get_sex_cols(info_file, vcf_header, sex="male"):
 		vcf_header as list
 	out: list [colnumbers of male samples]
 	'''
-	male_cols = []
+	sex_cols = []
+	miss_info = []
 	info = pd.read_csv(info_file)
 	# for each donor-id from vcf-header, get sex if present in info-file
 	for i in range(9, len(vcf_header)):
@@ -64,16 +65,26 @@ def get_sex_cols(info_file, vcf_header, sex="male"):
 			# (one sample can have multiple entires in info since it belongs to different populations)
 			sample_sex = sample_info['sex'].iloc[0]
 			if sample_sex == sex:
-				male_cols.append(i)
-	return male_cols
+				sex_cols.append(i)
+		else:
+			miss_info.append(vcf_header[i])
+	if len(miss_info) > 0:
+		sys.stderr.write("Error:\nMissing samples in " + info_file + ":\n")
+		sys.stderr.write(", ".join(miss_info) + "\n")
+		sys.exit()
+	return sex_cols
 
 ''' test
 vcf_header = ['#CHROM','POS','ID','REF','ALT','QUAL','FILTER','INFO','FORMAT','S_Esan-1','S_Esan-2','S_Luo-1']
-info_file = '/mnt/expressions/steffi/D/infofiles/combined_info.csv'
+info_file = '/mnt/expressions/steffi/D/infofiles/sample_info_giantVCF.csv'
 male_cols = get_sex_cols(info_file, vcf_header)
 male_cols == [9, 11]
 female_cols = get_sex_cols(info_file, vcf_header, 'female')
 female_cols == [10]
+
+# error by missing info
+vcf_header = ['#CHROM','POS','ID','REF','ALT','QUAL','FILTER','INFO','FORMAT','Miss1','S_Esan-2','Miss2']
+get_sex_cols(info_file, vcf_header)
 
 '''
 
