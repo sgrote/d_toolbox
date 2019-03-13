@@ -50,9 +50,9 @@ def convert_base(ref, alt, base):
 
 ''' test
 convert_base("A", "C", "A") == ('C', '0/0')
-convert_base("A", "C", "C") == ('C', '1/1')
+convert_base("A", "C", "c") == ('C', '1/1')
 convert_base("A", ".", "G") == ('G', '1/1')
-convert_base("A", "C", "G") == ('C,G', '2/2')
+convert_base("A", "C", "g") == ('C,G', '2/2')
 convert_base("A", "C", "N") == ('C', './.')
 convert_base("A", "C", ".") == ('C', './.')
 convert_base("A", "C,G", "T") == ('C,G,T', '3/3')
@@ -77,9 +77,9 @@ def convert_base_haplo(ref, alt, base):
 
 ''' test
 convert_base_haplo("A", "C", "A") == ('C', '0')
-convert_base_haplo("A", "C", "C") == ('C', '1')
+convert_base_haplo("A", "C", "c") == ('C', '1')
 convert_base_haplo("A", ".", "G") == ('G', '1')
-convert_base_haplo("A", "C", "G") == ('C,G', '2')
+convert_base_haplo("A", "C", "g") == ('C,G', '2')
 convert_base_haplo("A", "C", "N") == ('C', '.')
 convert_base_haplo("A", "C", ".") == ('C', '.')
 convert_base_haplo("A", "C,G", "T") == ('C,G,T', '3')
@@ -101,10 +101,10 @@ def convert_base_diploid(ref, alt, bases):
 
 ''' test
 convert_base_diploid("A", "C", ["A","A"]) == ('C', '0/0')
-convert_base_diploid("A", "C", ["C","C"]) == ('C', '1/1')
-convert_base_diploid("A", "C", ["C","A"]) == ('C', '0/1')
+convert_base_diploid("A", "C", ["c","C"]) == ('C', '1/1')
+convert_base_diploid("A", "C", ["c","a"]) == ('C', '0/1')
 convert_base_diploid("A", ".", ["G","A"]) == ('G', '0/1')
-convert_base_diploid("A", "C", ["G","C"]) == ('C,G', '1/2')
+convert_base_diploid("A", "C", ["G","c"]) == ('C,G', '1/2')
 convert_base_diploid("A", "C", ["A","N"]) == ('C', './0')
 convert_base_diploid("A", "C", ["T","T"]) == ('C,T', '2/2')
 convert_base_diploid("A", "C,G", ["T","G"]) == ('C,G,T', '2/3')
@@ -121,10 +121,10 @@ def convert_bases(ref, alt, bases):
 	return alt, gts
 
 ''' test
-convert_bases("A", "C", ["A","A"]) == ('C', ['0/0', '0/0'])
-convert_bases("A", "C", ["C","N","A"]) == ('C', ['1/1', './.', '0/0'])
+convert_bases("A", "C", ["A","a"]) == ('C', ['0/0', '0/0'])
+convert_bases("A", "C", ["c","N","A"]) == ('C', ['1/1', './.', '0/0'])
 convert_bases("A", ".", [".","G"]) == ('G', ['./.', '1/1'])
-convert_bases("A", "C", ["G","A","T","C","G"]) == ('C,G,T', ['2/2', '0/0', '3/3', '1/1', '2/2'])
+convert_bases("A", "C", ["g","A","T","c","G"]) == ('C,G,T', ['2/2', '0/0', '3/3', '1/1', '2/2'])
 convert_bases("A", "C,G", ["T","C",".","A","T"]) == ('C,G,T', ['3/3', '1/1', './.', '0/0', '3/3'])
 
 '''

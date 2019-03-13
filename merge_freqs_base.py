@@ -37,6 +37,7 @@ def merge_base(al, base):
 	in: allele freq line as list, base
 	out: merged line or None if triallelic
 	'''
+	base = base.upper()
 	ref = al[3]
 	alt = al[4]
 	if base == ref:
@@ -51,6 +52,7 @@ def merge_base(al, base):
 merge_base(["21","9828",".","T","G","0.0","1.0"], "T") == ["21","9828",".","T","G","0.0","1.0","0.0"]
 merge_base(["21","9828",".","T","G","0.0","1.0"], "G") == ["21","9828",".","T","G","0.0","1.0","1.0"]
 merge_base(["21","9828",".","T",".","0.0","1.0"], "T") == ["21","9828",".","T",".","0.0","1.0","0.0"]
+merge_base(["21","9828",".","T",".","0.0","1.0"], "t") == ["21","9828",".","T",".","0.0","1.0","0.0"]
 merge_base(["21","9828",".","T",".","0.0","1.0"], "G") == None
 merge_base(["21","9828",".","T","G","0.0","1.0"], "A") == None
 
@@ -109,7 +111,7 @@ def main():
 					if not args.require2:
 						out = al + ["."]
 					al = al_in.readline().split()
-				## pos not al --> skip: since REF at this pos is not known
+				## pos not in al --> skip: since REF at this pos is not known
 				elif int(base[1]) < int(al[1]):
 					base = bases.readline().split()
 				## positions are present in both files
