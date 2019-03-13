@@ -16,7 +16,7 @@ import allele_freqs as A
 
 
 def main():
-	parser = argparse.ArgumentParser(description='Calculate pariwise divergences between populations defined in pops and info file. Writes to file "out_diverge" [pop1, pop2, sum_match, sum_mismatch].', usage='zcat chr21.vcf.gz | pw_diverge.py pops -i pop-info')
+	parser = argparse.ArgumentParser(description='Calculate pairwise divergences between populations defined in pops and info file. Writes to file "out_diverge" [pop1, pop2, sum_match, sum_mismatch].', usage='zcat chr21.vcf.gz | pw_diverge.py pops -i pop-info')
 	# mandatory
 	parser.add_argument("pops", help="File with populations like in pop-column of info-file.")
 	parser.add_argument("-i", "--info", required=True, help="mandatory: csv-file with population metadata for pops (might contain more pops). Needs columns [sample; population; sex]; with sample being identical to the name in the vcf.")

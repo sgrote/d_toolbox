@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 ''' 
-subsample streamed in vcf-like file randomly given the proprtion of passing sites
+subsample streamed in vcf-like file randomly given the proportion of passing sites
 
 output to stdout
 input stream: (#header), columns: chr, pos, ...
@@ -16,7 +16,7 @@ from random import random
 
 
 def main():
-	parser = argparse.ArgumentParser(description="subsample streamed in vcf-like file randomly given the proprtion of passing sites.", usage="zcat file.vcf.gz | subsample_vcf.py 0.5")
+	parser = argparse.ArgumentParser(description="subsample streamed in vcf-like file randomly given the proportion of passing sites.", usage="zcat file.vcf.gz | subsample_vcf.py 0.5")
 	parser.add_argument("prob", type=float, help="proportion of passing sites; each position of the vcf will pass with the probability given by prob.")
 
 	args = parser.parse_args()
