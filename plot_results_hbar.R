@@ -7,7 +7,6 @@ library("optparse")
 # TODO:
 # maybe still use colors for populations as text colors for X and Y
 
-
 #### helper
   
 # compute absolute dynamix x axis maximum 	
@@ -19,6 +18,12 @@ dynam_x = function(out_d){
 	return(xmax)
 }
 
+# replace sample name with official name
+get_offi = function(x, offinames){
+    offi = offinames[match(x, offinames[,1]), 2]
+    offi[is.na(offi)] = x[is.na(offi)]
+    return(offi)
+}
 
 # plot horizontal barplot for D(pop1, pop2, pop3, pop4) with 3-4 pops fixed combi
 plot_d_hbars = function(input, superpops=NULL, xmin=NULL, xmax=NULL, mcex=0.8, legcex=0.7, lege=TRUE, infsites=TRUE, namesfile=NULL){
