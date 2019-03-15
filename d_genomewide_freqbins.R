@@ -68,15 +68,15 @@ for (i in 1:length(chroms)){
 	print(getwd())
 	# check that sites-file is there and has right format, skip chrom with message if not
 	if (! "sites" %in% dir()){
-	    message("skipping ", chroms[i], " (no sites file).")
-	    setwd("../")
-	    next
+		message("skipping ", chroms[i], " (no sites file).")
+		setwd("../")
+		next
 	}
 	sites = suppressMessages(as.data.frame(read_tsv("sites", col_types=cols(.default="c"))))
 	if (ncol(sites) < 6){
-	    message("skipping ", chroms[i], ". sites file lacks columns (run d_stats.py with --sites 'full' option).")
-	    setwd("../")
-	    next
+		message("skipping ", chroms[i], ". sites file lacks columns (run d_stats.py with --sites 'full' option).")
+		setwd("../")
+		next
 	}
 	# convert blocks and freqs to numeric (None -> NA)
 	sites[,c(1,5:ncol(sites))] = suppressWarnings(sapply(sites[,c(1,5:ncol(sites))], as.numeric))
