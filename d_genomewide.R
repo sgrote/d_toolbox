@@ -4,8 +4,20 @@
 # go through all autosome subdirectories and combine abba and baba 
 # genomewide only uses autosomes!
 
-require(gtools)
-require(plyr)
+library(optparse)
+library(gtools)
+library(plyr)
+
+
+option_list = list(
+	make_option(c("-o", "--outfile"), type="character", default="out_d",
+		help="output file name \n\t\tdefault = %default")
+)
+
+opt_parser = OptionParser(option_list=option_list, description="\nGo through all autosome subdirectories (named 'chr1', 'chr2' etc) and compute D(pop1, pop2, pop3, pop4) plus jackknife. Needs previous counting of ABBA and BABA sites by 'd_stats.py'")
+opt = parse_args(opt_parser)
+print(opt)
+
 
 # jackknife:
 argv = commandArgs(trailingOnly = FALSE)
@@ -38,7 +50,7 @@ for (i in 1:length(chroms)){
 	pw_sites = read.table("sites_comp", as.is=T, header=T)
 	# jackknife - by-function also returned NULL for unused factor combinations 
 	d = ddply(out_blocks, .(pop1,pop2,pop3,pop4), d_jackknife)
-	# NEW: add sites per pw
+	# add sites per pw
 	out = merge(d, pw_sites)
 	write.table(out, "out_d", row.names=F, quote=F, sep="\t")	
 	# collect for genomewide
