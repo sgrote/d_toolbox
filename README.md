@@ -3,7 +3,7 @@
 Here is a quick overview of the functionalities.  
 For more details see the help pages, e.g.  
 `./d_stats.py -h`  
-`./plot_results.R -h`
+`./d_genomewide.R -h`
 
 ### Common D-statistics
 
