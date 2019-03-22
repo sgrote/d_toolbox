@@ -119,10 +119,8 @@ def main():
         chrom = pos[0]
         print("next chrom!")
         outfile = args.outfile_trunk + "_chr" + chrom + ".tab.gz"
-        print(pos)
         with gzip.open(outfile, "wt") as out:
             outline = sample_base(pos, args.min_cov, args.min_qual, args.n_reads)
-            print(outline)
             if outline:
                 outline = "\t".join(outline)+"\n"
                 out.write(outline)
