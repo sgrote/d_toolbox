@@ -22,7 +22,6 @@ def main():
 	parser.add_argument("-i", "--info", required=True, help="mandatory: csv-file with population metadata for pops (might contain more pops). Needs columns [sample; population; sex]; with sample being identical to the name in the vcf.")
 	# optional
 	parser.add_argument("-t", "--transver", action="store_true", help="Transversions only.")
-	parser.add_argument("-a", "--accu_bial", action="store_true", help="Accurately check for biallelic sites among input pops, other samples can have a third state. (default is checking the ALT-field only).")
 	parser.add_argument("-d", "--digits", type=int, help="Round allele frequencies to -d digits.")
 	parser.add_argument("-c", "--counts", action="store_true", help="Output 'ALT/total' allele counts instead of frequencies, e.g '3/6' instead of '0.5'")
 
@@ -45,14 +44,13 @@ def main():
 	# from info-file and vcf-header: get col-numbers for every relevant pop and sex for every col
 	pop_colnums, col_gender = D.get_pop_colnumbers(args.info, vcf_header, pops)
 	
-
 	# Compute allele freqs and write to stdout
-	allele_freqs(vcf, pop_colnums, pops, args.transver, args.accu_bial, args.digits, args.counts)
+	allele_freqs(vcf, pop_colnums, pops, args.transver, args.digits, args.counts)
 
 
 
 # CAUTION this assumes pure genotype-input
-def allele_freqs(vcf, pop_colnums, pops, transver=False, accu_bial=False, digits=None, counts=False):
+def allele_freqs(vcf, pop_colnums, pops, transver=False, digits=None, counts=False):
 	sys.stdout.write('\t'.join(["#CHROM","POS","ID","REF","ALT"] + list(pops)) + "\n")
 	line_count = 0
 	trans_county = 0
@@ -66,13 +64,11 @@ def allele_freqs(vcf, pop_colnums, pops, transver=False, accu_bial=False, digits
 			if line[4] == ".":
 				continue
 			
-			## modify line if more than 2 states in ALT but only 2 in samples
-			if accu_bial:
-				# returns None or an updated biallelic line
-				# to make it work with get_p ALT-allele from samples will be set to 1
-				line = D.check_bial(line, pop_cols, non_pop_cols) 
-				if not line:
-					continue
+			# returns None or an updated biallelic line
+			# to make it work with get_p ALT-allele from samples will be set to 1
+			line = D.check_bial(line, pop_cols, non_pop_cols) 
+			if not line:
+				continue
 			
 			## check REF and ALT
 			## bases/genotypes
@@ -84,15 +80,6 @@ def allele_freqs(vcf, pop_colnums, pops, transver=False, accu_bial=False, digits
 				continue
 			if transver: 
 				if ("A" in ref+alt and "G" in ref+alt) or ("C" in ref+alt and "T" in ref+alt):
-					continue
-			
-			## always check for accu_bial before computing freqs, if it wasnt done yet
-			# since alt was already filtered, this will never include GT-updates,
-			# only checks if REF and ALT are present in genotypes
-			# this is faster then computing freqs first and then remove all 0,None
-			if not accu_bial:
-				line = D.check_bial(line, pop_cols, non_pop_cols)
-				if not line:
 					continue
 			
 			## get alternative allele freqs for input populations
