@@ -405,9 +405,6 @@ def get_p(vcf_line, pop, digits=None, counts=False):
 	out: ALT-allele-freq
 	'''
 	
-	ac = 0
-	sum_alleles = 0
-	
 	## pre-check for all-REF or all missing
 	genotypes = [vcf_line[colnumber] for colnumber in pop]
 	if not counts and all([g in ["0/0", "0|0", "0"] for g in genotypes]):
@@ -416,9 +413,10 @@ def get_p(vcf_line, pop, digits=None, counts=False):
 		return None
 	
 	# count alternative alleles and total number of alleles for one population  
+	ac = 0
+	sum_alleles = 0
 	for i in range(len(pop)):
-		gt = genotypes[i]
-		gt = gt.replace('/', '|')
+		gt = genotypes[i].replace('/', '|')
 		alleles = gt.split("|")
 		for a in alleles:
 			if a == "1":
@@ -432,9 +430,7 @@ def get_p(vcf_line, pop, digits=None, counts=False):
 				sys.exit()
 	
 	# compute frequency 
-	if sum_alleles == 0:
-		return None   # unknown sites may be fully genotyped invariable sites, here there is simply no GT 
-	elif counts:
+	if counts:
 		daf = str(ac) + "/" + str(sum_alleles)
 	else: 
 		daf = ac*1.0 / sum_alleles
