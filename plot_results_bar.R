@@ -83,7 +83,7 @@ plot_d_bars = function(input, superpops, ymin=NULL, ymax=NULL, mcex=0.9, legcex=
 	suppressWarnings(arrows(c(bars,bars), c(input$d+input$se,input$d-input$se), c(bars,bars), c(input$d, input$d), angle=90, code=1, length=0.015))
 	# significance asterix
 	input$bars = bars
-	offset = 0.05 * span
+	offset = 0.05 * (ymax - ymin)
     ytext = input$d + sign(input$d) * (input$se + offset)
     text(x=input$bars, y=ytext, labels=input$asterix, cex=cexnames)
 	
