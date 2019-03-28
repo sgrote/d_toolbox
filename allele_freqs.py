@@ -20,7 +20,7 @@ def main():
 	parser = argparse.ArgumentParser(description='Takes pops and pop-info from files, vcf from stdin and calculates allele freqs per population. Writes to stdout [#CHROM, POS, FLAG, REF, ALT, freq_pop1, freq_pop2, ...]. Only for biallelic sites, omits sites where all freqs are in {0, None}.', usage='zcat chr21.vcf.gz | allele_freqs.py pops -i pop-info | bgzip > alle_freqs_chr21.tab.gz')
 	# mandatory
 	parser.add_argument("pops", help="File with populations like in pop-column of info-file.")
-	parser.add_argument("-i", "--info", required=True, help="mandatory: csv-file with population metadata for pops (might contain more pops). Needs columns [sample; population; sex]; with sample being identical to the name in the vcf.")
+	parser.add_argument("info", help="mandatory: csv-file with population metadata for pops (might contain more pops). Needs columns [sample; population; sex]; with sample being identical to the name in the vcf.")
 	# optional
 	parser.add_argument("-t", "--transver", action="store_true", help="Transversions only.")
 	parser.add_argument("-d", "--digits", type=int, help="Round allele frequencies to -d digits.")
