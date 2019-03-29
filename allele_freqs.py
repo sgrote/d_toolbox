@@ -77,7 +77,7 @@ def add_flag(old_flag, new_flag):
 		return old_flag + "," + new_flag
 
 
-def flag(fields):
+def get_flag(fields):
 	'''
 	evaluate fields and return flag
 	'''
@@ -108,17 +108,17 @@ def flag(fields):
 	return flag
 
 ''' test
-flag(["21", "1234", ".", "A", "T"]) == "."
-flag(["21", "1234", ".", "A", "."]) == "invar"
-flag(["21", "1234", ".", "N", "."]) == "refbase,invar"
-flag(["21", "1234", ".", "TTT", "."]) == "indel,invar"
-flag(["21", "1234", ".", "TTT", "C"]) == "indel"
-flag(["21", "1234", ".", "TTT", "CC"]) == "indel"
-flag(["21", "1234", ".", "A", "G"]) == "transi"
-flag(["21", "1234", ".", "T", "C"]) == "transi"
-flag(["21", "1234", ".", "T", "CC"]) == "indel"
-flag(["21", "1234", ".", "T", "C,TTT"]) == "multial,indel,transi"
-flag(["21", "1234", ".", "T", "C,TTT,N"]) == "multial,indel,altbase,transi"
+get_flag(["21", "1234", ".", "A", "T"]) == "."
+get_flag(["21", "1234", ".", "A", "."]) == "invar"
+get_flag(["21", "1234", ".", "N", "."]) == "refbase,invar"
+get_flag(["21", "1234", ".", "TTT", "."]) == "indel,invar"
+get_flag(["21", "1234", ".", "TTT", "C"]) == "indel"
+get_flag(["21", "1234", ".", "TTT", "CC"]) == "indel"
+get_flag(["21", "1234", ".", "A", "G"]) == "transi"
+get_flag(["21", "1234", ".", "T", "C"]) == "transi"
+get_flag(["21", "1234", ".", "T", "CC"]) == "indel"
+get_flag(["21", "1234", ".", "T", "C,TTT"]) == "multial,indel,transi"
+get_flag(["21", "1234", ".", "T", "C,TTT,N"]) == "multial,indel,altbase,transi"
 
 '''
 
@@ -208,9 +208,13 @@ def allele_freqs(vcf, pop_colnums, pops, transver=False, digits=None, counts=Fal
 					fields = line.rstrip().split()
 				else:
 					continue
-			# get flag
-			fields[2] = flag(fields)
-			if fields[2] != "." and not fail_handle:
+			# flag transitions, multiallelic, etc
+			flag = get_flag(fields)
+			# skip if it doesn't pass filter and no --store_failed
+			val_flags = ["."]
+			if not transver:
+				val_flags.append("transi")
+			if flag not in val_flags and not fail_handle:
 				continue
 			# get freqs
 			n_alts = len(fields[4].split(","))
@@ -220,7 +224,8 @@ def allele_freqs(vcf, pop_colnums, pops, transver=False, digits=None, counts=Fal
 			# replace 'None' with '.'
 			freqs = ["." if p == None else p for p in freqs]
 			# write to stdout or file with fails
-			if fields[2] == ".":
+			fields[2] = flag
+			if flag in val_flags:
 				sys.stdout.write("\t".join(fields[:5]) + "\t" + "\t".join(map(str,freqs)) + "\n")
 			else:
 				fail_handle.write("\t".join(fields[:5]) + "\t" + "\t".join(map(str,freqs)) + "\n")
