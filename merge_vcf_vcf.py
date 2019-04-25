@@ -143,6 +143,7 @@ def main():
 	parser.add_argument("--header", choices=["vcf1", "vcf2"], help="optional: take the header from vcf1 or vcf2. If not specified a minimal standard header is added.")
 	parser.add_argument("--accu_alt", action="store_true", help="Check that all ALT alleles are really present in data, if not remove base from ALT and update numbers in genotypes")
 	parser.add_argument("--names2", help="comma-separated string of new sample names for vcf2")
+	parser.add_argument("--show_ref_fail", action="store_true", help="Write lines where REF allele does not match to stderr")
 	
 	args = parser.parse_args()
 
@@ -235,6 +236,9 @@ def main():
 						# both pass line-filter: merge, filter individual genotypes and check var again
 						elif v1_pass and v2_pass:
 							out = merge_and_filter(v1, v2, args.filter_ind1, args.filter_ind2, args.gt_only, args.var)
+					elif args.show_ref_fail:
+						sys.stderr.write("\t".join(v1[:7]) + "\n")
+						sys.stderr.write("\t".join(v2[:7]) + "\n")
 					# read next lines from both files (also if not (v1_pass or v2_pass))
 					v1 = vcf_1.readline().split()
 					v2 = vcf_2.readline().split()
