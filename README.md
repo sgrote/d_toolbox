@@ -34,6 +34,8 @@ Plot _D(X, Y, pop3, pop4)_ for every _pop3-pop4_ combination as horizontal barpl
 
 ### Allele-frequency stratified D-statistics
 
+See `slides/D_stats_freqbins_patterns.pdf` for some notes on the interpretation of stratified D-statistics
+
 ##### `d_genomewide_freqbins.R`
 
 compute _D(pop1, pop2, pop3, pop4)_ per B-allele-frequency-bin in _pop3_.  
