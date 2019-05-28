@@ -133,19 +133,23 @@ merge_lines(line5, line4) == ['21','148','.','C','G,A,T','.','.','.','GT','0|1',
 '''
 
 # this can be useful when individual genotypes were filtered, uses functions from here
-def check_complete_alt(line):
+def check_complete_alt(line, pop_cols=[], non_pop_cols=[]):
 	'''
-	check if all ALT-bases are really in data, modify if needed
-	in: vcf_line as list of strings
+	check if all ALT-bases are really in data (optionally restricted for pop_cols)
+	in: vcf_line as list of strings, optionally lists of target and non-target samples
 	out: original or updated vcf_line
+	(if line gets changed all non-input-samples become masked './.',
+	 this not necessary here but would be very ugly if they stay unchanged)
 	'''
 	alt = line[4]
 	if alt == ".":
 		return line
 	alt_alleles = alt.split(",")
-	# check if all alt are in data
-	gts = line[9:]
+	# restrict to specific samples?
+	if len(pop_cols) == 0:
+		pop_cols = [i for i in range(9, len(line))]
 	# extract genotype from more complex field (first entry)
+	gts = [line[i] for i in pop_cols]
 	gts_string = "".join([g.split(":")[0] for g in gts])
 	presente = [str(i+1) in gts_string for i in range(len(alt_alleles))]
 	# return input if all alleles are there
@@ -157,14 +161,19 @@ def check_complete_alt(line):
 	if len(new_alt) == 0:
 		alt_out = "."
 		# no GT-modification needed, must be {0,.}
-		gt_out = gts
+		out_line = line[:4] + [alt_out] + line[5:]
 	else:
 		alt_out = ",".join(new_alt)
 		# update GTs (index of old alleles in new alleles order, None for removed alleles)
 		new_alt_indi = [new_alt.index(o) + 1 if o in new_alt else None for o in alt_alleles]
-		gt_out = [replace(gt, new_alt_indi) for gt in gts]
-	# put fixed line together
-	out_line = line[:4] + [alt_out] + line[5:9] + gt_out
+		out_line = line
+		out_line[4] = alt_out
+		for i in range(len(pop_cols)):
+			out_line[pop_cols[i]] = replace(gts[i], new_alt_indi)
+		# mask other samples if any
+		for i in non_pop_cols:
+			out_line[i] = "./."
+		
 	return out_line
 
 
@@ -174,11 +183,14 @@ line1 = ['21','148','.','C','T,G','10','LowQual','AC=27','GT:GF','0/1:3','./0:-1
 line2 = ['21','148','.','C','T,G','10','LowQual','AC=27','GT:GF','0/2:3','./0:-1'] # first ALT miss
 line3 = ['21','148','.','C','.','10','PASS','.','GT','0|0','0|0'] # no ALT at all
 line4 = ['21','148','.','C','G,A','10','PASS','.','GT','0|0','0|0'] # all ALT miss
+line5 = ['21','148','.','C','G,A,T','10','PASS','.','GT','0|1','2|0','0|3','1|2'] # more samples
 
 check_complete_alt(line0) == ['21','148','.','C','T,G','10','LowQual','AC=27','GT:GF','0/1:3','./2:-1']
+check_complete_alt(line0, [9], [10]) == ['21','148','.','C','T','10','LowQual','AC=27','GT:GF','0/1:3','./.']
 check_complete_alt(line1) == ['21','148','.','C','T','10','LowQual','AC=27','GT:GF','0/1:3','./0:-1']
 check_complete_alt(line2) == ['21','148','.','C','G','10','LowQual','AC=27','GT:GF','0/1:3','./0:-1']
 check_complete_alt(line3) == ['21','148','.','C','.','10','PASS','.','GT','0|0','0|0']
 check_complete_alt(line4) == ['21','148','.','C','.','10','PASS','.','GT','0|0','0|0']
+check_complete_alt(line5, [9,11], [10,12]) == ['21','148','.','C','G,T','10','PASS','.','GT','0|1','./.','0|2','./.']
 
 '''

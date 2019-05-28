@@ -14,6 +14,7 @@ import argparse
 import gzip
 
 import d_functions as D
+import merge_vcf_GTs as M
 
 
 def main():
@@ -206,6 +207,8 @@ def allele_freqs(vcf, pop_colnums, pops, transver=False, digits=None, counts=Fal
 				# if no pass get unmodified fields again, will be flagged as multi-allelic
 				if fail_handle:
 					fields = line.rstrip().split()
+					# check_bial can switch REF and ALT, this one removes unused ALTs for non-bial sites
+					fields = M.check_complete_alt(fields, pop_cols, non_pop_cols)
 				else:
 					continue
 			# flag transitions, multiallelic, etc
